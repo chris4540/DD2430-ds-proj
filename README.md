@@ -14,4 +14,10 @@ data-science-project
 
 + https://www.linkedin.com/pulse/using-deep-learning-fashion-similarity-face-vaibhav-gusain
 
-- https://github.com/PlabanM1/FashionNet/blob/master/FashionNet.ipynb
+
+* Resnet Classificaton style
++ https://towardsdatascience.com/similar-images-recommendations-using-fastai-and-annoy-16d6ceb3b809
+- https://jovian.ml/gautham20/deepfashion-similar-images-annoy
++ https://blog.floydhub.com/similar-fashion-images/
+- https://github.com/khanhnamle1994/fashion-recommendation
++ https://github.com/PlabanM1/FashionNet/blob/master/FashionNet.ipynb
