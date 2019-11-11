@@ -27,4 +27,17 @@ Requirement:
 2. Share weightings
 3. Implmenet loss functions
 4. Simple dataset to show it works (minst/other dataset which run fast and light)
+
+Ref:
+
+# Keras
+https://github.com/keras-team/keras/blob/master/examples/mnist_siamese.py
+https://github.com/sugi-chan/shoes_siamese/blob/master/Siamese-clothes.ipynb
+https://github.com/PlabanM1/FashionNet/blob/master/FashionNet.ipynb
+
+# PyTorch
+https://github.com/harveyslash/Facial-Similarity-with-Siamese-Networks-in-Pytorch/blob/master/Siamese-networks-medium.ipynb
+https://github.com/fangpin/siamese-pytorch/blob/5543f1e844964b116dc9d347a5eb164c6a7afe6d/model.py#L6
+https://github.com/adambielski/siamese-triplet/blob/master/Experiments_FashionMNIST.ipynb
+Refer to my notebooks for required changes to siamese to allign them to the paper
 """
