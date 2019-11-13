@@ -27,3 +27,9 @@ Group 15 - Fashion Image similarity
 #### Useful tool
 1. https://github.com/fastai/fastai
 2. https://github.com/williamFalcon/pytorch-lightning
+
+
+##### Baseline
+1. https://jovian.ml/gautham20/deepfashion-similar-images-annoy
+    Just using classification
+2. Type b, c, d Siamese network in the paper. 
