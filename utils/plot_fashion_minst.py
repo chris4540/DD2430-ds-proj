@@ -1,5 +1,7 @@
-import numpy as np
+import matplotlib.pyplot
 from matplotlib import pyplot as plt
+import numpy as np
+matplotlib.pyplot.switch_backend('Agg')
 
 
 class FashionMinstConst:
