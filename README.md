@@ -3,6 +3,9 @@ Group 15 - Fashion Image similarity
 
 ## Target for week 46
 - [ ] Implement and test with fashion minst
+  - [x] Baseline implmentation
+  - [ ] Investigate and use ignite or lighting
+  - [ ] Implment Siamese Embedding (Siam),  Siam+Cat, Siam+Cat Cos
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Check if okay to use high level lib like lighting, igite, or fastai (fastai is quite hard to use)
 - [ ] Deploy and babysit a while (Target by Sat)
