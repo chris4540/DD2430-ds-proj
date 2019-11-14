@@ -20,13 +20,16 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
         scheduler.step()
 
         # Train stage
-        train_loss, metrics = train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, metrics)
+        train_loss, metrics = train_epoch(
+            train_loader, model, loss_fn, optimizer, cuda, log_interval, metrics)
 
-        message = 'Epoch: {}/{}. Train set: Average loss: {:.4f}'.format(epoch + 1, n_epochs, train_loss)
+        message = 'Epoch: {}/{}. Train set: Average loss: {:.4f}'.format(
+            epoch + 1, n_epochs, train_loss)
         for metric in metrics:
             message += '\t{}: {}'.format(metric.name(), metric.value())
 
-        val_loss, metrics = test_epoch(val_loader, model, loss_fn, cuda, metrics)
+        val_loss, metrics = test_epoch(
+            val_loader, model, loss_fn, cuda, metrics)
         val_loss /= len(val_loader)
 
         message += '\nEpoch: {}/{}. Validation set: Average loss: {:.4f}'.format(epoch + 1, n_epochs,
@@ -54,7 +57,6 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             if target is not None:
                 target = target.cuda()
 
-
         optimizer.zero_grad()
         outputs = model(*data)
 
@@ -67,7 +69,8 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             loss_inputs += target
 
         loss_outputs = loss_fn(*loss_inputs)
-        loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else loss_outputs
+        loss = loss_outputs[0] if type(loss_outputs) in (
+            tuple, list) else loss_outputs
         losses.append(loss.item())
         total_loss += loss.item()
         loss.backward()
@@ -115,7 +118,8 @@ def test_epoch(val_loader, model, loss_fn, cuda, metrics):
                 loss_inputs += target
 
             loss_outputs = loss_fn(*loss_inputs)
-            loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else loss_outputs
+            loss = loss_outputs[0] if type(loss_outputs) in (
+                tuple, list) else loss_outputs
             val_loss += loss.item()
 
             for metric in metrics:

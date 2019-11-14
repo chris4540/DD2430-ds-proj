@@ -1,5 +1,5 @@
 import numpy as np
-from matplotlib import pyploy as plt
+from matplotlib import pyplot as plt
 
 
 class FashionMinstConst:
@@ -16,7 +16,7 @@ class PlotConfig:
 
 
 def plot_embeddings(embeddings, targets, xlim=None, ylim=None):
-    plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 10))
     for i in range(10):
         inds = np.where(targets == i)[0]
         plt.scatter(embeddings[inds, 0],
@@ -26,3 +26,5 @@ def plot_embeddings(embeddings, targets, xlim=None, ylim=None):
     if ylim:
         plt.ylim(ylim[0], ylim[1])
     plt.legend(FashionMinstConst.classes)
+
+    return fig

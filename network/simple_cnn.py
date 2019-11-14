@@ -2,19 +2,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class SimpleCNN(nn.Module):
     """
     A simple CNN
     Notes:
-    The 
+    The
     """
+
     def __init__(self):
         super().__init__()
         self.convnet = nn.Sequential(
-            nn.Conv2d(1, 32, 5), 
+            nn.Conv2d(1, 32, 5),
             nn.PReLU(),
             nn.MaxPool2d(2, stride=2),
-            nn.Conv2d(32, 64, 5), 
+            nn.Conv2d(32, 64, 5),
             nn.PReLU(),
             nn.MaxPool2d(2, stride=2))
 
@@ -23,7 +25,9 @@ class SimpleCNN(nn.Module):
             nn.PReLU(),
             nn.Linear(256, 256))
 
-        # 
+        self._emb_dim = 256
+
+        #
         self.clsf = nn.Sequential(
             nn.PReLU(),
             nn.Linear(256, 10))
@@ -32,15 +36,20 @@ class SimpleCNN(nn.Module):
         """
         Return a logits vector
         """
-        out = self.forward_to_embbeding(x)
+        out = self.fwd_to_emb_layer(x)
         out = self.clsf(out)
         return out
 
-    def forward_to_embbeding(self, x):
+    def fwd_to_emb_layer(self, x):
         out = self.convnet(x)
         out = out.view(out.size()[0], -1)
         out = self.fc(out)
         return out
+
+    # @property
+    # def embedding_dimension(self):
+    #     return self._emb_dim
+
 
 if __name__ == '__main__':
 

@@ -41,9 +41,9 @@ https://github.com/fangpin/siamese-pytorch/blob/5543f1e844964b116dc9d347a5eb164c
 https://github.com/adambielski/siamese-triplet/blob/master/Experiments_FashionMNIST.ipynb
 Refer to my notebooks for required changes to siamese to allign them to the paper
 """
+
 import torch
 from torchvision.datasets import FashionMNIST
 from torchvision import transforms
-
 if __name__ == '__main__':
-	pass
+    pass
