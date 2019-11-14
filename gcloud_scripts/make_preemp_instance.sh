@@ -1,9 +1,10 @@
 #!/bin/bash
-export ZONE="europe-west1-b"
-export IMAGE_NAME="tf-1-14-cu100-20191004"
-export INSTANCE_NAME="tf-exp-p100-preemp3"
+
+export ZONE="europe-west4-b"
+export IMAGE_NAME="pytorch-1-3-cu100-notebooks-20191112"
+export INSTANCE_NAME="torch13-chris-p4-premp"
 export INSTANCE_TYPE="n1-highmem-2"
-export GPU_CONFIG="type=nvidia-tesla-p100,count=1"
+export GPU_CONFIG="type=nvidia-tesla-p4,count=1"
 export BOOT_DISK_SIZE="100GB"
 
 gcloud compute instances create $INSTANCE_NAME \
@@ -14,5 +15,6 @@ gcloud compute instances create $INSTANCE_NAME \
   --maintenance-policy=TERMINATE \
   --boot-disk-size=$BOOT_DISK_SIZE \
   --accelerator=$GPU_CONFIG \
+  --no-boot-disk-auto-delete \
   --metadata="install-nvidia-driver=True" \
   --preemptible

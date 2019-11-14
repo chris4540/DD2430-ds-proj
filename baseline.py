@@ -46,7 +46,7 @@ if has_cuda:
     model.cuda()
 optimizer = optim.Adam(model.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
-n_epochs = 1
+n_epochs = 10
 log_interval = 50
 
 fit(train_loader, test_loader, model, loss_fn, optimizer, scheduler,
