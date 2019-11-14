@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class SimpleCNN(nn.Module):
     """
@@ -25,9 +26,12 @@ class SimpleCNN(nn.Module):
         # 
         self.clsf = nn.Sequential(
             nn.PReLU(),
-            nn.Linear(256, 10)) 
+            nn.Linear(256, 10))
 
     def forward(self, x):
+        """
+        Return a logits vector
+        """
         out = self.forward_to_embbeding(x)
         out = self.clsf(out)
         return out
