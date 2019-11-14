@@ -1,6 +1,12 @@
 # Data Science Project
 Group 15 - Fashion Image similarity
 
+## Target for week 46
+- [ ] Implement and test with fashion minst
+- [ ] Have dataset and pairing for deep fashion dataset
+- [ ] Check if okay to use high level lib like lighting, igite, or fastai (fastai is quite hard to use)
+- [ ] Deploy and babysit a while (Target by Sat)
+
 ## Available Material
 
 ### Orginal Paper: https://www.cs.cornell.edu/~kb/publications/SIG15ProductNet.pdf

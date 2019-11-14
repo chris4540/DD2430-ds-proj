@@ -1,0 +1,43 @@
+import torch
+from torchvision.datasets import FashionMNIST
+from torchvision import transforms
+from utils.metrics import AccumulatedAccuracyMetric
+from utils.trainer import fit
+from network.simple_cnn import SimpleCNN
+from torch.optim import lr_scheduler
+import torch.optim as optim
+
+mean, std = 0.28604059698879553, 0.35302424451492237
+batch_size = 256
+
+# DataSet
+train_dataset = FashionMNIST('../data/FashionMNIST', train=True, download=True,
+                             transform=transforms.Compose([
+                                 transforms.ToTensor(),
+                                 transforms.Normalize((mean,), (std,))
+                             ]))
+test_dataset = FashionMNIST('../data/FashionMNIST', train=False, download=True,
+                            transform=transforms.Compose([
+                                transforms.ToTensor(),
+                                transforms.Normalize((mean,), (std,))
+                            ]))
+
+has_cuda = torch.cuda.is_available()
+kwargs = {'num_workers': 1, 'pin_memory': True} if has_cuda else {}
+
+# data loders
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, **kwargs)
+
+n_classes = 10
+# ---------------------------------------------------------------------
+
+model = SimpleCNN()
+loss_fn = torch.nn.CrossEntropyLoss()
+lr = 1e-2
+optimizer = optim.Adam(model.parameters(), lr=lr)
+scheduler = lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
+n_epochs = 10
+log_interval = 50
+
+fit(train_loader, test_loader, model, loss_fn, optimizer, scheduler, n_epochs, has_cuda, log_interval, metrics=[AccumulatedAccuracyMetric()])
