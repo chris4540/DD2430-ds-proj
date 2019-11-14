@@ -5,32 +5,36 @@ import torch.nn.functional as F
 
 class SimpleCNN(nn.Module):
     """
-    A simple CNN
-    Notes:
-    The
+    This is a simplest network to fit with fashion minst dataset.
+    This network is to fasten the development time for the cycle:
+        - coding
+        - testing
+        - visualization
     """
 
     def __init__(self):
         super().__init__()
         self.convnet = nn.Sequential(
             nn.Conv2d(1, 32, 5),
-            nn.PReLU(),
+            nn.ReLU(),
             nn.MaxPool2d(2, stride=2),
             nn.Conv2d(32, 64, 5),
-            nn.PReLU(),
+            nn.ReLU(),
             nn.MaxPool2d(2, stride=2))
 
         self.fc = nn.Sequential(
             nn.Linear(64 * 4 * 4, 256),
-            nn.PReLU(),
-            nn.Linear(256, 256))
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 50),)
 
-        self._emb_dim = 256
+        # self._emb_dim = 256
 
         #
         self.clsf = nn.Sequential(
-            nn.PReLU(),
-            nn.Linear(256, 10))
+            nn.ReLU(),
+            nn.Linear(50, 10))
 
     def forward(self, x):
         """

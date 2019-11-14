@@ -1,3 +1,4 @@
+from sklearn.manifold import TSNE
 import torch
 from torchvision.datasets import FashionMNIST
 from torchvision import transforms
@@ -45,17 +46,23 @@ if has_cuda:
     model.cuda()
 optimizer = optim.Adam(model.parameters(), lr=lr)
 scheduler = lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
-n_epochs = 2
+n_epochs = 1
 log_interval = 50
 
 fit(train_loader, test_loader, model, loss_fn, optimizer, scheduler,
     n_epochs, has_cuda, log_interval, metrics=[AccumulatedAccuracyMetric()])
 # ---------------------------------------------------------------------------
 # Obtain the embeddings
-embeddings, labels = extract_embeddings(model, train_loader)
-# Project it with pca
-pca = PCA(n_components=2)
-projected_emb = pca.fit_transform(embeddings)
+embeddings, labels = extract_embeddings(model, test_loader)
+# # Project it with pca
+# pca = PCA(n_components=2)
+# projected_emb = pca.fit_transform(embeddings)
+
+# The default of 1,000 iterations gives fine results, but I'm training for longer just to eke
+# out some marginal improvements. NB: This takes almost an hour!
+tsne = TSNE(random_state=1, n_iter=1000, metric="cosine")
+
+projected_emb = tsne.fit_transform(embeddings)
 
 fig = plot_embeddings(projected_emb, labels)
 
