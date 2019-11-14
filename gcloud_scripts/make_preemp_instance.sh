@@ -1,15 +1,4 @@
 #!/bin/bash
-#
-# For creating google cloud preemptible instance with GPU nvidia-tesla-p100
-# THis instance mainly for developement
-#
-# Reference:
-# https://cloud.google.com/ai-platform/deep-learning-vm/docs/tensorflow_start_instance
-# https://cloud.google.com/compute/docs/gpus/
-# For using different GPU cards:
-# change the gpu config. See the doc above
-# =================================================
-
 export ZONE="europe-west1-b"
 export IMAGE_NAME="tf-1-14-cu100-20191004"
 export INSTANCE_NAME="tf-exp-p100-preemp3"
