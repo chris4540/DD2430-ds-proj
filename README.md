@@ -57,3 +57,8 @@ Group 15 - Fashion Image similarity
    https://github.com/rapidsai/cudf
    https://towardsdatascience.com/600x-t-sne-speedup-with-rapids-5b4cf1f62059
    (Has installation issues due to cuda requirement. Can be done in seperate VM in worst case. (Not current Priority))
+
+##### Getting Similar Images
+1. Using indexing from *ANNOY* library results is fastest nearest neighbour retreival. 
+  https://jovian.ml/gautham20/deepfashion-similar-images-annoy
+  (easy to use (Not a Priority))
