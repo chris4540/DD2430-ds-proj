@@ -1,8 +1,12 @@
 """
 Implementation using pytorch ignite
 
-Ref:
+Reference:
     https://github.com/pytorch/ignite/blob/v0.2.1/examples/mnist/mnist.py
+    https://fam-taro.hatenablog.com/entry/2018/12/25/021346
+
+TODO:
+    resume from checkpoint (check statedict)
 """
 import torch
 import torch.nn.functional as F
@@ -18,6 +22,7 @@ from ignite.engine import create_supervised_trainer
 from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
+from ignite.handlers import ModelCheckpoint
 
 # from argparse import ArgumentParser
 from tqdm import tqdm
@@ -122,6 +127,15 @@ class BaselineFashionMNIST:
             desc=desc.format(0)
         )
 
+        # checkpoints
+        handler = ModelCheckpoint(dirname='./checkpoints', filename_prefix='sample',
+                                  save_interval=2, n_saved=3, create_dir=True, save_as_state_dict=True)
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, handler, {
+                'model': model,
+                "optimizer": optimizer,
+            })
+
         # ----------------
         # Callbacks
         # ----------------
@@ -159,6 +173,9 @@ class BaselineFashionMNIST:
 
         trainer.run(train_loader, max_epochs=cfg.epochs)
         pbar.close()
+
+    def save_model(self):
+        pass
 
 
 if __name__ == "__main__":
