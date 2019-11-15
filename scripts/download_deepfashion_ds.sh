@@ -45,7 +45,7 @@ rm -f img.zip
 gdown --id ${IMAGE_DATA_ID} -O img.zip
 
 # 2. check md5 sum
-echo "Checking MD5 sum"
+echo "Checking MD5 sum..."
 echo "${MD5_SUM} *img.zip" | md5sum -c
 
 # 3. move to data_dir
