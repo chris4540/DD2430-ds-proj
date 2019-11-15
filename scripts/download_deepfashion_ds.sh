@@ -26,12 +26,9 @@ MD5_SUM=48aca947353f2235d27a52e6707205b7
 
 # Check and install gdown
 if [[ ! -x "$(command -v gdown)" ]]; then
-    # Install gdown when not found
-    if [[ -x "$(command -v gdown)" ]]; then
-        pip install --user gdown
-    else
-        echo "Unable to install gdown as no pip found. Please install python and pip."
-    fi
+    echo "Please install gdown by the following command."
+    echo "pip install gdown"
+    exit 1
 fi
 # ------------------------------------------------------------------------------
 # Get the script dir first
@@ -49,7 +46,7 @@ gdown --id ${IMAGE_DATA_ID} -O img.zip
 
 # 2. check md5 sum
 echo "Checking MD5 sum"
-echo "${MD5_SUM} *img.zip" | md5sum.exe -c
+echo "${MD5_SUM} *img.zip" | md5sum -c
 
 # 3. move to data_dir
 mv img.zip ${data_dir}
