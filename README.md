@@ -7,6 +7,7 @@ Group 15 - Fashion Image similarity
   - [x] Investigate ignite
   - [ ] Use ignite
   - [ ] Implment Siamese Embedding (Siam),  Siam+Cat, Siam+Cat Cos
+- [ ] Write script to download deep fashion dataset
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Check if okay to use high level lib like lighting, igite, or fastai (fastai is quite hard to use)
 - [ ] Deploy and babysit a while (Target by Sat)
