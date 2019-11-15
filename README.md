@@ -4,15 +4,21 @@ Group 15 - Fashion Image similarity
 ## Target for week 46
 - [ ] Implement and test with fashion minst
   - [x] Baseline implmentation
-  - [ ] Investigate and use ignite or lighting
+  - [x] Investigate ignite
+  - [ ] Use ignite
   - [ ] Implment Siamese Embedding (Siam),  Siam+Cat, Siam+Cat Cos
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Check if okay to use high level lib like lighting, igite, or fastai (fastai is quite hard to use)
 - [ ] Deploy and babysit a while (Target by Sat)
 
-## Available Material
+## Reason to use ignite
+1. Supported by pytorch offical
+2. Similar to keras
+3. Stable releases
 
-### Orginal Paper: https://www.cs.cornell.edu/~kb/publications/SIG15ProductNet.pdf
+## Available Implementation and literature
+--------------------------------------------
+## [Orginal Paper](https://www.cs.cornell.edu/~kb/publications/SIG15ProductNet.pdf)
 
 #### Similar Siamese work:
 
