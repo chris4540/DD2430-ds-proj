@@ -15,21 +15,19 @@ class SimpleCNN(nn.Module):
     def __init__(self):
         super().__init__()
         self.convnet = nn.Sequential(
-            nn.Conv2d(1, 32, 5),
+            nn.Conv2d(1, 16, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2, stride=2),
-            nn.Conv2d(32, 64, 5),
+            nn.Conv2d(16, 32, kernel_size=5),
             nn.ReLU(),
-            nn.MaxPool2d(2, stride=2))
+            nn.MaxPool2d(2, stride=2)
+        )
 
         self.fc = nn.Sequential(
-            nn.Linear(64 * 4 * 4, 256),
+            nn.Linear(32 * 4 * 4, 256),
             nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 50),)
-
-        # self._emb_dim = 256
+            nn.Linear(256, 50),
+        )
 
         #
         self.clsf = nn.Sequential(
@@ -49,10 +47,6 @@ class SimpleCNN(nn.Module):
         out = out.view(out.size()[0], -1)
         out = self.fc(out)
         return out
-
-    # @property
-    # def embedding_dimension(self):
-    #     return self._emb_dim
 
 
 if __name__ == '__main__':
