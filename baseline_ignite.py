@@ -11,6 +11,7 @@ TODO:
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 from torchvision.transforms import ToTensor
@@ -30,7 +31,7 @@ from tqdm import tqdm
 
 class HyperParams:
     batch_size = 256
-    lr = 1e-2
+    lr = 5e-2
     log_interval = 50
     epochs = 5
 
@@ -110,6 +111,9 @@ class BaselineFashionMNIST:
         # optimizer
         optimizer = optim.Adam(model.parameters(), lr=cfg.lr)
 
+        # learning rate scheduler
+        scheduler = StepLR(optimizer=optimizer, step_size=2, gamma=0.1, last_epoch=-1)
+
         # loss function
         loss_fn = F.cross_entropy
         # trainer
@@ -130,15 +134,30 @@ class BaselineFashionMNIST:
         # checkpoints
         handler = ModelCheckpoint(dirname='./checkpoints', filename_prefix='sample',
                                   save_interval=2, n_saved=3, create_dir=True, save_as_state_dict=True)
+
+        # -------------------
+        # Callbacks / Events
+        # -------------------
+
+        # check point
         trainer.add_event_handler(
             Events.EPOCH_COMPLETED, handler, {
                 'model': model,
                 "optimizer": optimizer,
             })
 
-        # ----------------
-        # Callbacks
-        # ----------------
+        # learning rate
+        # trainer.add_event_handler(Events.I, lambda engine: lr_scheduler.step())
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def take_scheduler_step(engine):
+            scheduler.step()
+
+            # Print out
+            tqdm.write("Learning Rate - Epoch: {}  Learning Rate: {}"
+                .format(engine.state.epoch, scheduler.get_lr()))
+
+
+
         @trainer.on(Events.ITERATION_COMPLETED)
         def log_training_loss(engine):
             iter = (engine.state.iteration - 1) % len(train_loader) + 1
