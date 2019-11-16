@@ -52,10 +52,12 @@ has_cuda = torch.cuda.is_available()
 kwargs = {}
 
 # data loders
-train_loader = torch.utils.data.DataLoader(
+siamese_train_loader = torch.utils.data.DataLoader(
     siamese_train_ds, batch_size=batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
+siamese_test_loader = torch.utils.data.DataLoader(
     siamese_test_ds, batch_size=batch_size, shuffle=False, **kwargs)
+test_loader = torch.utils.data.DataLoader(
+    test_dataset, batch_size=batch_size, shuffle=False, **kwargs)
 # ---------------------------------------------------------------------
 
 # Step 2
@@ -70,11 +72,11 @@ lr = 1e-2
 if has_cuda:
     model.cuda()
 optimizer = optim.Adam(model.parameters(), lr=lr)
-scheduler = lr_scheduler.StepLR(optimizer, 8, gamma=0.1, last_epoch=-1)
-n_epochs = 10
+scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1, last_epoch=-1)
+n_epochs = 20
 log_interval = 50
 
-fit(train_loader, test_loader, model, loss_fn, optimizer, scheduler,
+fit(siamese_train_loader, siamese_test_loader, model, loss_fn, optimizer, scheduler,
     n_epochs, has_cuda, log_interval)
 # ---------------------------------------------------------------------------
 # Obtain the embeddings
