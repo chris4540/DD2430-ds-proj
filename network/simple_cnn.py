@@ -12,8 +12,12 @@ class SimpleCNN(nn.Module):
         - visualization
     """
 
-    def __init__(self):
+    def __init__(self, last_layer='logits'):
+
         super().__init__()
+
+        self.last_layer = last_layer
+
         self.convnet = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=5),
             nn.ReLU(),
@@ -39,7 +43,9 @@ class SimpleCNN(nn.Module):
         Return a logits vector
         """
         out = self.fwd_to_emb_layer(x)
-        out = self.clsf(out)
+
+        if self.last_layer == 'logits':
+            out = self.clsf(out)
         return out
 
     def fwd_to_emb_layer(self, x):

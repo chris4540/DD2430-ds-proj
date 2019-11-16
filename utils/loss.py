@@ -1,20 +1,23 @@
-class Custom_ContrastiveLoss(torch.nn.Module):
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class ContrastiveLoss(nn.Module):
     """
-    Contrastive loss function.
-    Based on: http://yann.lecun.com/exdb/publis/pdf/hadsell-chopra-lecun-06.pdf
+    Contrastive loss
+    Takes embeddings of two samples and a target label == 1 if samples are from the same class and label == 0 otherwise
     """
 
-    def __init__(self, margin=2.0):
-        super(ContrastiveLoss, self).__init__()
+    def __init__(self, margin):
+        super().__init__()
         self.margin = margin
+        self.eps = 1e-9
 
-    def forward(self, embd_output1, class_output1, embd_output2, class_output2, label, class1, class2):
-        euclidean_distance = F.pairwise_distance(
-            embd_output1, embd_output1, keepdim=True)
-        loss_contrastive = torch.mean((1-label) * torch.pow(euclidean_distance, 2) +
-                                      (label) * torch.pow(torch.clamp(self.margin - euclidean_distance, min=0.0), 2))
+    def forward(self, output1, output2, target, size_average=True):
+        distances = (output2 - output1).pow(2).sum(1)  # squared distances
+        losses = 0.5 * (target.float() * distances +
+                        (1 + -1 * target).float() * F.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
 
-        loss_1 = nn.CrossEntropyLoss(class_output1, class1)
-        loss_2 = nn.CrossEntropyLoss(class_output2, class2)
-
-        return loss_contrastive+loss_1+loss_2
+        ret = losses.mean() if size_average else losses.sum()
+        return ret
