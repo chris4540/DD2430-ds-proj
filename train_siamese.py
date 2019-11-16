@@ -1,4 +1,6 @@
-from sklearn.manifold import TSNE
+# from sklearn.manifold import TSNE
+import cuml
+from cuml.manifold import TSNE
 import torch
 from torchvision.datasets import FashionMNIST
 from torchvision import transforms
@@ -68,11 +70,12 @@ model = SiameseNet(embedding_net)
 margin = 1.
 loss_fn = ContrastiveLoss(margin)
 
-lr = 1e-2
+lr = 1e-3
 if has_cuda:
     model.cuda()
 optimizer = optim.Adam(model.parameters(), lr=lr)
-scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1, last_epoch=-1)
+scheduler = lr_scheduler.StepLR(
+    optimizer, step_size=5, gamma=0.1, last_epoch=-1)
 n_epochs = 20
 log_interval = 50
 
@@ -82,7 +85,7 @@ fit(siamese_train_loader, siamese_test_loader, model, loss_fn, optimizer, schedu
 # Obtain the embeddings
 embeddings, labels = extract_embeddings(embedding_net, test_loader)
 
-tsne = TSNE(random_state=1, n_iter=1000, metric="cosine")
+tsne = TSNE(random_state=1, n_iter=1000, metric="euclidean")
 
 projected_emb = tsne.fit_transform(embeddings)
 
