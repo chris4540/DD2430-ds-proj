@@ -12,7 +12,7 @@
 #        https://rapids.ai/start.html#rapids-release-selector
 #     2. This script takes time. A installed image is created and named as:
 #        pytorch-1-3-rapids-0-10-cu100-20181117
-#     3. RAPIDS only works with NVIDIA Pascal™ GPU (i.e. either p4, p8, or p100)
+#     3. RAPIDS only works with NVIDIA Pascal™ GPU (i.e. either p4, or p100)
 #     4. The CUDA version of the image is "pytorch-1-3-cu100-20191112"
 # ------------------------------------------------------------------------------
 
