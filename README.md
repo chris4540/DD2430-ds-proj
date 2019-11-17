@@ -76,6 +76,11 @@ Group 15 - Fashion Image similarity
   cat /usr/local/cuda/version.txt
   nvcc --version
   ```
+4. Parallel version of t-SNE
+  https://github.com/DmitryUlyanov/Multicore-TSNE
+  ```bash
+  conda install -c powerai multicoretsne
+  ```
 
 ##### Getting Similar Images
 1. Using indexing from *ANNOY* library results is fastest nearest neighbour retreival.
