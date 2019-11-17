@@ -15,7 +15,8 @@ def map_images_to_embbedings(model, images):
     with torch.no_grad():
         if USING_CUDA:
             images = images.cuda()
-        ret = model.fwd_to_emb_layer(images)
+
+        ret = model(images)
 
     ret = ret.cpu()
 
