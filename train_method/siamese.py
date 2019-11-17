@@ -15,7 +15,6 @@ from torchvision.transforms import Compose
 from torchvision.transforms import ToTensor
 from torchvision.transforms import Normalize
 from torchvision.datasets import FashionMNIST
-from network.simple_cnn import SimpleCNN
 from ignite.engine import Events
 from ignite.engine import create_supervised_trainer
 from ignite.engine import create_supervised_evaluator
@@ -23,6 +22,10 @@ from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
 from utils.loss import ContrastiveLoss
+from utils.datasets import SiameseMNIST
+from network.simple_cnn import SimpleConvEmbNet
+from network.siamese import SiameseNet
+
 
 # from argparse import ArgumentParser
 from tqdm import tqdm
@@ -52,8 +55,8 @@ class FashionMNISTConfig:
 
 class SiameseFashionMNIST:
 
-    def __init__(self):
-        pass
+    def __init__(self, hparams):
+        self.hparams = HyperParams(hparams)
 
 
     def prepare_data_loaders(self):
@@ -81,8 +84,8 @@ class SiameseFashionMNIST:
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
-        siamese_train_ds = SiameseMNIST(train_dataset)
-        siamese_test_ds = SiameseMNIST(test_dataset)
+        siamese_train_ds = SiameseMNIST(train_ds)
+        # siamese_test_ds = SiameseMNIST(val_ds)
 
         # ----------------------------
         # Consturct loader
@@ -90,19 +93,20 @@ class SiameseFashionMNIST:
         # self.train_loader = DataLoader(train_ds
         #     train_ds, shuffle=True, batch_size=HyperParams.batch_size)
         self.val_loader = DataLoader(val_ds, shuffle=False,
-                                batch_size=HyperParams.batch_size)
+                                batch_size=self.hparams.batch_size)
         self.siamese_train_loader = DataLoader(
-                siamese_train_ds, batch_size=batch_size, shuffle=True, **kwargs)
+                siamese_train_ds, batch_size=self.hparams.batch_size, shuffle=True)
         # self.siamese_val_loader = torch.utils.data.DataLoader(
         #     siamese_test_ds, batch_size=batch_size, shuffle=False, **kwargs)
 
-    def run(self, hparams):
+    def run(self):
 
         # Config
-        cfg = HyperParams(hparams)
+        cfg = self.hparams
 
         # model
-        model = SimpleCNN()
+        emb_net = SimpleConvEmbNet()
+        model = SiameseNet(emb_net)
         self.model = model
 
         # prepare the loaders
