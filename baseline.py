@@ -15,12 +15,12 @@ mean, std = 0.28604059698879553, 0.35302424451492237
 batch_size = 256
 
 # DataSet
-train_dataset = FashionMNIST('../data/FashionMNIST', train=True, download=True,
+train_dataset = FashionMNIST('.', train=True, download=True,
                              transform=transforms.Compose([
                                  transforms.ToTensor(),
                                  transforms.Normalize((mean,), (std,))
                              ]))
-test_dataset = FashionMNIST('../data/FashionMNIST', train=False, download=True,
+test_dataset = FashionMNIST('.', train=False, download=True,
                             transform=transforms.Compose([
                                 transforms.ToTensor(),
                                 transforms.Normalize((mean,), (std,))
