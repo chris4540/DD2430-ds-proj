@@ -8,9 +8,10 @@ Group 15 - Fashion Image similarity
   - [x] Use ignite
   - [ ] Implment Siamese Embedding (Siam),  Siam+Cat, Siam+Cat Cos
 - [x] Write script to download deep fashion dataset
+- [x] Install and test cuML for t-SNE visualization 
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Implment on Deep fashion
-- [ ] Deploy and babysit a while (Target by Sat)
+- [ ] Deploy and babysit a while 
 
 ## Reason to use ignite
 1. Supported by pytorch offical
@@ -64,14 +65,22 @@ Group 15 - Fashion Image similarity
 ##### Visualization
 1. Scikit T-SNE option very slow.
    https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
-2. TSNE from *cudf* library runs on GPU and usage same as scikit.
-   https://github.com/rapidsai/cudf
+2. TSNE from *cuML* library runs on GPU and usage same as scikit.
+   https://rapids.ai/start.html#rapids-release-selector
    https://towardsdatascience.com/600x-t-sne-speedup-with-rapids-5b4cf1f62059
-   (Has installation issues due to cuda requirement. Can be done in seperate VM in worst case. (Not current Priority))
-   https://medium.com/analytics-vidhya/super-fast-tsne-cuda-on-kaggle-b66dcdc4a5a4
+3. TSNE-CUDA
    https://github.com/CannyLab/tsne-cuda
+   https://medium.com/analytics-vidhya/super-fast-tsne-cuda-on-kaggle-b66dcdc4a5a4
+*  Notes: Check cuda version
+  ```bash
+  cat /usr/local/cuda/version.txt
+  nvcc --version
+  ```
 
 ##### Getting Similar Images
 1. Using indexing from *ANNOY* library results is fastest nearest neighbour retreival.
   https://jovian.ml/gautham20/deepfashion-similar-images-annoy
   (easy to use (Not a Priority))
+
+##### Customized Google Clould image
+1. pytorch-1-3-rapids-0-10-cu100-20181117
