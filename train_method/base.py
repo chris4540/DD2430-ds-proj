@@ -1,4 +1,5 @@
 from tqdm import tqdm
+from .abc import AbstractBaseClass
 
 
 class BaseTrainingMethod(AbstractBaseClass):

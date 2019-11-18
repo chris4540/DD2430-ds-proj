@@ -1,7 +1,12 @@
+import sys
 import inspect
 
 
 class HyperParams:
+    """
+    A class for placing hyper parameters for training.
+    Expected to display during training and save down to experiement / train folder
+    """
     batch_size = 256
     lr = 5e-2
     epochs = 5
@@ -34,11 +39,18 @@ class HyperParams:
         return repr(params)
 
     def display(self):
-        params = self._get_param_dict()
-        print("--------- Hyper Parameters ---------")
-        for k, v in params.items():
-            print("{:30} {}".format(k, v))
-        print("--------- Hyper Parameters ---------")
+        self.print_on(file=sys.stdout)
 
-    def save_to_txt(self):
+    def print_on(self, file):
+        params = self._get_param_dict()
+        print("--------- Hyper Parameters ---------", file=file)
+        for k, v in params.items():
+            print("{:30} {}".format(k, v), file=file)
+        print("--------- Hyper Parameters ---------", file=file)
+
+    def save_to_txt(self, fname):
+        with open(fname, 'w') as f:
+            self.print_on(f)
+
+    def save_as_json(self, fname):
         pass

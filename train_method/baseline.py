@@ -46,6 +46,7 @@ class BaselineFashionMNIST(BaseTrainingMethod):
         super().__init__(log_interval=log_interval)
         self.hparams = HyperParams(**kwargs)
         self.hparams.display()
+        # self.hparams.save_to_txt('hp.txt')
 
         # check if cpu or gpu
         if torch.cuda.is_available():
