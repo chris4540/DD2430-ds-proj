@@ -1,9 +1,9 @@
 import inspect
 
+
 class HyperParams:
     batch_size = 256
     lr = 5e-2
-    log_interval = 50
     epochs = 5
 
     def __init__(self, **kwargs):

@@ -58,7 +58,6 @@ class SiameseFashionMNIST:
     def __init__(self, hparams):
         self.hparams = HyperParams(hparams)
 
-
     def prepare_data_loaders(self):
         """
         Our target is to construct embbeding space. Therefore we use the "test set"
@@ -93,9 +92,9 @@ class SiameseFashionMNIST:
         # self.train_loader = DataLoader(train_ds
         #     train_ds, shuffle=True, batch_size=HyperParams.batch_size)
         self.val_loader = DataLoader(val_ds, shuffle=False,
-                                batch_size=self.hparams.batch_size)
+                                     batch_size=self.hparams.batch_size)
         self.siamese_train_loader = DataLoader(
-                siamese_train_ds, batch_size=self.hparams.batch_size, shuffle=True)
+            siamese_train_ds, batch_size=self.hparams.batch_size, shuffle=True)
         # self.siamese_val_loader = torch.utils.data.DataLoader(
         #     siamese_test_ds, batch_size=batch_size, shuffle=False, **kwargs)
 
@@ -123,7 +122,8 @@ class SiameseFashionMNIST:
         optimizer = optim.Adam(model.parameters(), lr=cfg.lr)
 
         # learning rate scheduler
-        scheduler = StepLR(optimizer=optimizer, step_size=2, gamma=0.1, last_epoch=-1)
+        scheduler = StepLR(optimizer=optimizer, step_size=2,
+                           gamma=0.1, last_epoch=-1)
 
         # loss function
         margin = 1.0
@@ -166,8 +166,7 @@ class SiameseFashionMNIST:
 
             # Print out
             tqdm.write("Learning Rate - Epoch: {}  Learning Rate: {}"
-                .format(engine.state.epoch, scheduler.get_lr()))
-
+                       .format(engine.state.epoch, scheduler.get_lr()))
 
         @trainer.on(Events.ITERATION_COMPLETED)
         def log_training_loss(engine):
@@ -206,4 +205,3 @@ class SiameseFashionMNIST:
 
     def save_model(self):
         pass
-
