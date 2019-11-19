@@ -8,7 +8,7 @@ Group 15 - Fashion Image similarity
   - [x] Investigate ignite
   - [x] Use ignite
 - [x] Write script to download deep fashion dataset
-- [x] Install and test cuML for t-SNE visualization 
+- [x] Install and test cuML for t-SNE visualization
 
 ## Target for week 47
 - [x] Implment Siamese Embedding (Siam)
@@ -16,8 +16,13 @@ Group 15 - Fashion Image similarity
 - [ ] Implment Siam+Cat Cos
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Implment on Deep fashion
-- [ ] Deploy and babysit a while 
+- [ ] Deploy and babysit a while
 - [ ] Automatic backup experiment directory
+- [ ] Create detailed attributes for a class. Person in charge: Hassan
+- [ ] KNN searching (ANNOY) and top-k evaluation. Out-training evalution. Person in charge: Hassan
+- [ ] Model candidate: resnet 18, vgg16(wo bn)
+
+
 
 ## Reason to use ignite
 1. Supported by pytorch offical
