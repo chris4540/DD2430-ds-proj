@@ -132,11 +132,11 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
 
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_training_results, **{
-                'train_loader': train_loader,
-                'evaluator': evaluator
-            })
+        # trainer.add_event_handler(
+        #     Events.EPOCH_COMPLETED, self.log_training_results, **{
+        #         'train_loader': train_loader,
+        #         'evaluator': evaluator
+        #     })
 
         # trainer.add_event_handler(
         #     Events.EPOCH_COMPLETED, self.log_validation_results, **{
