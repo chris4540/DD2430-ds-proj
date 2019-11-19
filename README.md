@@ -2,13 +2,18 @@
 Group 15 - Fashion Image similarity
 
 ## Target for week 46
-- [ ] Implement and test with fashion minst
+- [x] Investigate the torch training framework
+- [x] Implement and test with fashion minst
   - [x] Baseline implmentation
   - [x] Investigate ignite
   - [x] Use ignite
-  - [ ] Implment Siamese Embedding (Siam),  Siam+Cat, Siam+Cat Cos
 - [x] Write script to download deep fashion dataset
 - [x] Install and test cuML for t-SNE visualization 
+
+## Target for week 47
+- [x] Implment Siamese Embedding (Siam)
+- [ ] Implment Siam+Cat, Siam+Cat Cos
+- [ ] Implment Siam+Cat Cos
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Implment on Deep fashion
 - [ ] Deploy and babysit a while 
