@@ -20,6 +20,8 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
         scheduler.step()
 
         # Train stage
+
+        # duplicates - train_loss is already in metric
         train_loss, metrics = train_epoch(
             train_loader, model, loss_fn, optimizer, cuda, log_interval, metrics)
 
@@ -28,6 +30,7 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
         for metric in metrics:
             message += '\t{}: {}'.format(metric.name(), metric.value())
 
+        # duplicates - val_loss is already in metric
         val_loss, metrics = test_epoch(
             val_loader, model, loss_fn, cuda, metrics)
         val_loss /= len(val_loader)
@@ -69,6 +72,7 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             loss_inputs += target
 
         loss_outputs = loss_fn(*loss_inputs)
+        # is this case even possible?
         loss = loss_outputs[0] if type(loss_outputs) in (
             tuple, list) else loss_outputs
         losses.append(loss.item())
@@ -79,6 +83,7 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
         for metric in metrics:
             metric(outputs, target, loss_outputs)
 
+        # check message edge case, batch_idx is 0 indexed
         if batch_idx % log_interval == 0:
             message = 'Train: [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 batch_idx * len(data[0]), len(train_loader.dataset),
@@ -90,6 +95,7 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             losses = []
 
     total_loss /= (batch_idx + 1)
+
     return total_loss, metrics
 
 
