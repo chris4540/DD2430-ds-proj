@@ -1,9 +1,71 @@
+"""
+Reference:
+https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
+"""
 import numpy as np
+import pandas as pd
+from os.path import join
 from PIL import Image
-
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import BatchSampler
 
+
+
+class DeepFashionDataset(Dataset):
+    """
+    Abstracted data represetation for deep fashion dataset
+
+    Responsible:
+        1. manage meta data
+        2. apply valid transformation
+
+    Example:
+        train_ds = DeepFashionDataset("./deepfashion_data")
+        loader = DataLoader(train_ds)
+    """
+
+    metadata_csv = "deepfashion1_categoryData.csv"
+
+    def __init__(self, root, ds_type, transforms=None):
+        """
+        Args:
+            root: The root directory of data
+            ds_type: dataset type, either train, val, or test
+
+        """
+        # check input if valid
+        valid_ds_types = ['train', 'val', 'test']
+        if ds_type not in valid_ds_types:
+            raise ValueError(
+                "ds_type should be one of the following: \"{}\"".format(
+                    ', '.join(valid_ds_types)))
+
+
+        # record down the init. args
+        self.ds_type = ds_type
+        self.transform = transforms
+
+        if self.ds_type == 'train':
+            self.train = True
+        else:
+            self.train = False
+        # ------------------------------------
+        # Read the csv
+        metadata_csv_file = join(root, self.metadata_csv)
+        self._alldata = pd.read_csv(metadata_csv_file)
+
+        # Select images, label from _alldata where dataset == ds_type
+        self.data = self._alldata[self._alldata['dataset'] == self.ds_type][['images', 'label']]
+
+    def __len__(self):
+        """
+        Return the size of the dataset
+        """
+        ret = self.data.shape[0]
+        return ret
+
+    def __getitem__(self, idx):
+        pass
 
 class SiameseMNIST(Dataset):
     """
