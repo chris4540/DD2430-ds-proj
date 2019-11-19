@@ -9,7 +9,7 @@ TODO:
     resume from checkpoint (check statedict)
 """
 from . import HyperParams
-from .base import BaseTrainingMethod
+from .base import BaseTrainer
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -36,7 +36,7 @@ class FashionMNISTConfig:
     std = 0.35302424451492237
 
 
-class BaselineFashionMNIST(BaseTrainingMethod):
+class BaselineFashionMNISTTrainer(BaseTrainer):
     """
     Test tube class for constructing embbeding space only with classifcation
     method

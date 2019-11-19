@@ -1,8 +1,8 @@
 from tqdm import tqdm
-from .abc import AbstractBaseClass
+from .abc import AdstractTrainer
 
 
-class BaseTrainingMethod(AbstractBaseClass):
+class BaseTrainer(AdstractTrainer):
     """
     Basic training method which has a lot of common display settings and callbacks
     """
