@@ -11,11 +11,16 @@ class SiameseMNIST(Dataset):
     Test: Creates fixed pairs for testing
     """
 
-    def __init__(self, mnist_dataset):
+    def __init__(self, mnist_dataset, rndState=None):
         self.mnist_dataset = mnist_dataset
 
         self.train = self.mnist_dataset.train
         self.transform = self.mnist_dataset.transform
+
+        # to allow train and test with diff seeds
+        if rndState:
+            self.rndState = rndState
+            random_state = np.random.RandomState(rndState)
 
         if self.train:
             self.train_labels = self.mnist_dataset.train_labels
@@ -31,8 +36,6 @@ class SiameseMNIST(Dataset):
             self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0]
                                      for label in self.labels_set}
 
-            random_state = np.random.RandomState(29)
-
             positive_pairs = [[i,
                                random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
                                1]
@@ -40,7 +43,7 @@ class SiameseMNIST(Dataset):
 
             negative_pairs = [[i,
                                random_state.choice(self.label_to_indices[
-                                                       np.random.choice(
+                                                       random_state.choice(
                                                            list(self.labels_set - set([self.test_labels[i].item()]))
                                                        )
                                                    ]),
@@ -50,15 +53,15 @@ class SiameseMNIST(Dataset):
 
     def __getitem__(self, index):
         if self.train:
-            target = np.random.randint(0, 2)
+            target = random_state.randint(0, 2)
             img1, label1 = self.train_data[index], self.train_labels[index].item()
             if target == 1:
                 siamese_index = index
                 while siamese_index == index:
-                    siamese_index = np.random.choice(self.label_to_indices[label1])
+                    siamese_index = random_state.choice(self.label_to_indices[label1])
             else:
-                siamese_label = np.random.choice(list(self.labels_set - set([label1])))
-                siamese_index = np.random.choice(self.label_to_indices[siamese_label])
+                siamese_label = random_state.choice(list(self.labels_set - set([label1])))
+                siamese_index = random_state.choice(self.label_to_indices[siamese_label])
             img2 = self.train_data[siamese_index]
         else:
             img1 = self.test_data[self.test_pairs[index][0]]
