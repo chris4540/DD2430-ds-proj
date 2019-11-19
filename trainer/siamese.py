@@ -1,13 +1,4 @@
-"""
-Requirement:
-1. Enable to put a model with certain architecture (Abstract class)
-2. Share weightings
-3. Implmenet loss functions
-4. Simple dataset to show it works (minst/other dataset which run fast and light)
-"""
-
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
@@ -25,38 +16,24 @@ from utils.loss import ContrastiveLoss
 from utils.datasets import SiameseMNIST
 from network.simple_cnn import SimpleConvEmbNet
 from network.siamese import SiameseNet
+from . import HyperParams
+from .base import BaseTrainer
+from config.fashion_mnist import FashionMNISTConfig
 
+class SiameseFashionMNISTTrainer(BaseTrainer):
+    
+    def __init__(self, log_interval=50, **kwargs):
+        super().__init__(log_interval=log_interval)
+        self.hparams = HyperParams(**kwargs)
+        self.hparams.display()
+        # self.hparams.save_to_txt('hp.txt')
 
-# from argparse import ArgumentParser
-from tqdm import tqdm
+        # check if cpu or gpu
+        if torch.cuda.is_available():
+            self.device = 'cuda'
+        else:
+            self.device = 'cpu'
 
-
-class HyperParams:
-    batch_size = 256
-    lr = 5e-2
-    log_interval = 50
-    epochs = 1
-
-    def __init__(self, hparams):
-        pass
-
-    def __repr__(self):
-        pass
-
-    def save_to_json(self):
-        pass
-
-
-class FashionMNISTConfig:
-    root = "./"
-    mean = 0.28604059698879553
-    std = 0.35302424451492237
-
-
-class SiameseFashionMNIST:
-
-    def __init__(self, hparams):
-        self.hparams = HyperParams(hparams)
 
     def prepare_data_loaders(self):
         """
@@ -91,116 +68,83 @@ class SiameseFashionMNIST:
         # ----------------------------
         # self.train_loader = DataLoader(train_ds
         #     train_ds, shuffle=True, batch_size=HyperParams.batch_size)
-        self.val_loader = DataLoader(val_ds, shuffle=False,
-                                     batch_size=self.hparams.batch_size)
-        self.siamese_train_loader = DataLoader(
+        # self.val_loader = DataLoader(val_ds, shuffle=False,
+        #                              batch_size=self.hparams.batch_size)
+        self.train_loader = DataLoader(
             siamese_train_ds, batch_size=self.hparams.batch_size, shuffle=True)
         # self.siamese_val_loader = torch.utils.data.DataLoader(
         #     siamese_test_ds, batch_size=batch_size, shuffle=False, **kwargs)
 
-    def run(self):
-
-        # Config
-        cfg = self.hparams
-
+    def prepare_exp_settings(self):
         # model
         emb_net = SimpleConvEmbNet()
         model = SiameseNet(emb_net)
         self.model = model
 
-        # prepare the loaders
-        self.prepare_data_loaders()
-        train_loader = self.siamese_train_loader
-
-        # device
-        if torch.cuda.is_available():
-            device = 'cuda'
-        else:
-            device = 'cpu'
-
         # optimizer
-        optimizer = optim.Adam(model.parameters(), lr=cfg.lr)
+        self.optimizer = optim.Adam(
+            self.model.parameters(), lr=self.hparams.lr)
 
         # learning rate scheduler
-        scheduler = StepLR(optimizer=optimizer, step_size=2,
-                           gamma=0.1, last_epoch=-1)
+        self.scheduler = StepLR(
+            optimizer=self.optimizer, step_size=2, gamma=0.1, last_epoch=-1)
 
         # loss function
         margin = 1.0
-        loss_fn = ContrastiveLoss(margin)
+        self.loss_fn = ContrastiveLoss(margin)
+
+        # evalution metrics
+        self.eval_metrics = {
+            'accuracy': Accuracy(),
+            'loss': Loss(self.loss_fn)
+        }
+    # ------------------------------------------------------------------
+    def run(self):
+        self.prepare_before_run()
+        # ----------------------------------
+        # Alias
+        model = self.model
+        optimizer = self.optimizer
+        # scheduler = self.scheduler
+        loss_fn = self.loss_fn
+        device = self.device
+        eval_metrics = self.eval_metrics
+        hparams = self.hparams
+        # ----------------------------------
+        # log_interval = self.log_cfg['interval']
+        # desc = self.log_cfg['desc']
+        pbar = self.log_cfg['pbar']
+        # ----------------------------------
+        # Special alias
+        train_loader = self.train_loader
+
         # trainer
         trainer = create_supervised_trainer(
             model, optimizer, loss_fn, device=device)
 
-        evaluator = create_supervised_evaluator(model,
-                                                metrics={'accuracy': Accuracy(),
-                                                         'loss': Loss(loss_fn)},
-                                                device=device)
-
-        desc = "ITERATION - loss: {:.2f}"
-        pbar = tqdm(
-            initial=0, leave=False, total=len(train_loader),
-            desc=desc.format(0)
-        )
-
-        # checkpoints
-        handler = ModelCheckpoint(dirname='./checkpoints', filename_prefix='sample',
-                                  save_interval=2, n_saved=3, create_dir=True, save_as_state_dict=True)
-
-        # -------------------
-        # Callbacks / Events
-        # -------------------
-
-        # check point
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, handler, {
-                'model': model,
-                "optimizer": optimizer,
-            })
+        evaluator = create_supervised_evaluator(
+            model, metrics=eval_metrics, device=device)
 
         # learning rate
-        # trainer.add_event_handler(Events.I, lambda engine: lr_scheduler.step())
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def take_scheduler_step(engine):
-            scheduler.step()
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.take_scheduler_step)
 
-            # Print out
-            tqdm.write("Learning Rate - Epoch: {}  Learning Rate: {}"
-                       .format(engine.state.epoch, scheduler.get_lr()))
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, self.log_training_loss)
 
-        @trainer.on(Events.ITERATION_COMPLETED)
-        def log_training_loss(engine):
-            iter = (engine.state.iteration - 1) % len(train_loader) + 1
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.log_training_results, **{
+                'train_loader': train_loader,
+                'evaluator': evaluator
+            })
 
-            if iter % cfg.log_interval == 0:
-                pbar.desc = desc.format(engine.state.output)
-                pbar.update(cfg.log_interval)
+        # trainer.add_event_handler(
+        #     Events.EPOCH_COMPLETED, self.log_validation_results, **{
+        #         'val_loader': val_loader,
+        #         'evaluator': evaluator
+        #     })
 
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def log_training_results(engine):
-            pbar.refresh()
-            evaluator.run(train_loader)
-            metrics = evaluator.state.metrics
-            avg_accuracy = metrics['accuracy']
-            avg_loss = metrics['loss']
-            tqdm.write(
-                "Training Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
-                .format(engine.state.epoch, avg_accuracy, avg_loss)
-            )
-
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def log_validation_results(engine):
-            evaluator.run(val_loader)
-            metrics = evaluator.state.metrics
-            avg_accuracy = metrics['accuracy']
-            avg_loss = metrics['loss']
-            tqdm.write(
-                "Validation Results - Epoch: {}  Avg accuracy: {:.2f} Avg loss: {:.2f}"
-                .format(engine.state.epoch, avg_accuracy, avg_loss))
-
-            pbar.n = pbar.last_print_n = 0
-
-        trainer.run(train_loader, max_epochs=cfg.epochs)
+        trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
 
     def save_model(self):

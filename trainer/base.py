@@ -17,6 +17,8 @@ class BaseTrainer(AdstractTrainer):
     }
 
     def __init__(self, log_interval):
+        if not isinstance(log_interval, int) or not log_interval > 0:
+            raise ValueError("log_interval is a positive integer.")
         self.log_cfg['interval'] = log_interval
 
     def prepare_before_run(self):

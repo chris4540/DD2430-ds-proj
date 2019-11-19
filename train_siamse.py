@@ -1,6 +1,6 @@
-from train_method.siamese import SiameseFashionMNIST
+from trainer.siamese import SiameseFashionMNISTTrainer
 
 
-hyper_params = dict()
-experiment = SiameseFashionMNIST(hyper_params)
+# hyper_params = dict()
+experiment = SiameseFashionMNISTTrainer()
 experiment.run()
