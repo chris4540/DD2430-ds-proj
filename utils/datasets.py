@@ -9,7 +9,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import BatchSampler
 
-
+import zipfile
 
 class DeepFashionDataset(Dataset):
     """
@@ -26,12 +26,12 @@ class DeepFashionDataset(Dataset):
 
     metadata_csv = "deepfashion1_categoryData.csv"
 
-    def __init__(self, root, ds_type, transforms=None):
+    def __init__(self, root, ds_type, transform=None):
         """
         Args:
-            root: The root directory of data
-            ds_type: dataset type, either train, val, or test
-
+            root (str): The root directory of data
+            ds_type (str): dataset type, either train, val, or test
+            transform (callable, optional): Optional transform to be applied on a sample.
         """
         # check input if valid
         valid_ds_types = ['train', 'val', 'test']
@@ -43,7 +43,7 @@ class DeepFashionDataset(Dataset):
 
         # record down the init. args
         self.ds_type = ds_type
-        self.transform = transforms
+        self.transform = transform
 
         if self.ds_type == 'train':
             self.train = True
@@ -55,8 +55,11 @@ class DeepFashionDataset(Dataset):
         self._alldata = pd.read_csv(metadata_csv_file)
 
         # Select images, label from _alldata where dataset == ds_type
-        self.data = self._alldata[self._alldata['dataset'] == self.ds_type][['images', 'label']]
+        self.data = self._alldata[
+                self._alldata['dataset'] == self.ds_type][['images', 'label']]
 
+        #
+        # archive = zipfile.ZipFile('deepfashion_data/img.zip', 'r')
     def __len__(self):
         """
         Return the size of the dataset
@@ -65,7 +68,21 @@ class DeepFashionDataset(Dataset):
         return ret
 
     def __getitem__(self, idx):
-        pass
+        """
+        Args:
+            index (int): Index
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
+        """
+        img_path = self.data.iloc[0]
+        # import zipfile
+        # archive = zipfile.ZipFile('deepfashion_data/img.zip', 'r')
+        # from PIL import Image
+        # with archive.open('img/Sheer_Pleated-Front_Blouse/img_00000001.jpg') as f:
+            # img = Image.open(f)
+            # img.load()
+            # np.asarry(...)
 
 class SiameseMNIST(Dataset):
     """
