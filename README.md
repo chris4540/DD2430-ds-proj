@@ -17,6 +17,7 @@ Group 15 - Fashion Image similarity
 - [ ] Have dataset and pairing for deep fashion dataset
 - [ ] Implment on Deep fashion
 - [ ] Deploy and babysit a while 
+- [ ] Automatic backup experiment directory
 
 ## Reason to use ignite
 1. Supported by pytorch offical
