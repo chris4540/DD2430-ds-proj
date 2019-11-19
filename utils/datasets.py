@@ -11,16 +11,15 @@ class SiameseMNIST(Dataset):
     Test: Creates fixed pairs for testing
     """
 
-    def __init__(self, mnist_dataset, rndState=None):
+    def __init__(self, mnist_dataset, rndState=13):
         self.mnist_dataset = mnist_dataset
 
         self.train = self.mnist_dataset.train
         self.transform = self.mnist_dataset.transform
 
         # to allow train and test with diff seeds
-        if rndState:
-            self.rndState = rndState
-            random_state = np.random.RandomState(rndState)
+        self.rndState = rndState
+        random_state = np.random.RandomState(rndState)
 
         if self.train:
             self.train_labels = self.mnist_dataset.train_labels
