@@ -4,12 +4,12 @@ https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 """
 import numpy as np
 import pandas as pd
-from os.path import join
+from os.path import join as path_join
 from PIL import Image
 from torch.utils.data import Dataset
 from torch.utils.data.sampler import BatchSampler
-
 import zipfile
+
 
 class DeepFashionDataset(Dataset):
     """
@@ -40,7 +40,6 @@ class DeepFashionDataset(Dataset):
                 "ds_type should be one of the following: \"{}\"".format(
                     ', '.join(valid_ds_types)))
 
-
         # record down the init. args
         self.ds_type = ds_type
         self.transform = transform
@@ -51,15 +50,26 @@ class DeepFashionDataset(Dataset):
             self.train = False
         # ------------------------------------
         # Read the csv
-        metadata_csv_file = join(root, self.metadata_csv)
+        metadata_csv_file = path_join(root, self.metadata_csv)
         self._alldata = pd.read_csv(metadata_csv_file)
 
         # Select images, label from _alldata where dataset == ds_type
         self.data = self._alldata[
-                self._alldata['dataset'] == self.ds_type][['images', 'label']]
+            self._alldata['dataset'] == self.ds_type][['images', 'label']]
 
-        #
-        # archive = zipfile.ZipFile('deepfashion_data/img.zip', 'r')
+        # Load the zip file
+        self.img_zip = zipfile.ZipFile(path_join(root, "img.zip"), 'r')
+
+    def __del__(self):
+        """
+        Destructor of this class
+        """
+        # Release the resources when this class destroy
+        try:
+            self.img_zip.close()
+        except:
+            pass
+
     def __len__(self):
         """
         Return the size of the dataset
@@ -75,14 +85,23 @@ class DeepFashionDataset(Dataset):
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        img_path = self.data.iloc[0]
-        # import zipfile
-        # archive = zipfile.ZipFile('deepfashion_data/img.zip', 'r')
-        # from PIL import Image
-        # with archive.open('img/Sheer_Pleated-Front_Blouse/img_00000001.jpg') as f:
-            # img = Image.open(f)
-            # img.load()
-            # np.asarry(...)
+        metadata = self.data.iloc[idx]
+        img_path = metadata['images']
+        target = metadata['label']
+
+        with self.img_zip.open(img_path) as f:
+            # Open the image file
+            img = Image.open(f)
+            # load it as the Image class do lazy evaluation
+            img.load()
+            # Transform if applicable
+            if self.transform:
+                img = self.transform(img)
+
+        return (img, target)
+
+# -------------------------------------------------------------------------------
+
 
 class SiameseMNIST(Dataset):
     """
@@ -113,16 +132,18 @@ class SiameseMNIST(Dataset):
             random_state = np.random.RandomState(29)
 
             positive_pairs = [[i,
-                               random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
+                               random_state.choice(
+                                   self.label_to_indices[self.test_labels[i].item()]),
                                1]
                               for i in range(0, len(self.test_data), 2)]
 
             negative_pairs = [[i,
                                random_state.choice(self.label_to_indices[
-                                                       np.random.choice(
-                                                           list(self.labels_set - set([self.test_labels[i].item()]))
-                                                       )
-                                                   ]),
+                                   np.random.choice(
+                                       list(
+                                           self.labels_set - set([self.test_labels[i].item()]))
+                                   )
+                               ]),
                                0]
                               for i in range(1, len(self.test_data), 2)]
             self.test_pairs = positive_pairs + negative_pairs
@@ -130,14 +151,18 @@ class SiameseMNIST(Dataset):
     def __getitem__(self, index):
         if self.train:
             target = np.random.randint(0, 2)
-            img1, label1 = self.train_data[index], self.train_labels[index].item()
+            img1, label1 = self.train_data[index], self.train_labels[index].item(
+            )
             if target == 1:
                 siamese_index = index
                 while siamese_index == index:
-                    siamese_index = np.random.choice(self.label_to_indices[label1])
+                    siamese_index = np.random.choice(
+                        self.label_to_indices[label1])
             else:
-                siamese_label = np.random.choice(list(self.labels_set - set([label1])))
-                siamese_index = np.random.choice(self.label_to_indices[siamese_label])
+                siamese_label = np.random.choice(
+                    list(self.labels_set - set([label1])))
+                siamese_index = np.random.choice(
+                    self.label_to_indices[siamese_label])
             img2 = self.train_data[siamese_index]
         else:
             img1 = self.test_data[self.test_pairs[index][0]]
@@ -184,24 +209,30 @@ class TripletMNIST(Dataset):
             random_state = np.random.RandomState(29)
 
             triplets = [[i,
-                         random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
+                         random_state.choice(
+                             self.label_to_indices[self.test_labels[i].item()]),
                          random_state.choice(self.label_to_indices[
-                                                 np.random.choice(
-                                                     list(self.labels_set - set([self.test_labels[i].item()]))
-                                                 )
-                                             ])
+                             np.random.choice(
+                                 list(
+                                     self.labels_set - set([self.test_labels[i].item()]))
+                             )
+                         ])
                          ]
                         for i in range(len(self.test_data))]
             self.test_triplets = triplets
 
     def __getitem__(self, index):
         if self.train:
-            img1, label1 = self.train_data[index], self.train_labels[index].item()
+            img1, label1 = self.train_data[index], self.train_labels[index].item(
+            )
             positive_index = index
             while positive_index == index:
-                positive_index = np.random.choice(self.label_to_indices[label1])
-            negative_label = np.random.choice(list(self.labels_set - set([label1])))
-            negative_index = np.random.choice(self.label_to_indices[negative_label])
+                positive_index = np.random.choice(
+                    self.label_to_indices[label1])
+            negative_label = np.random.choice(
+                list(self.labels_set - set([label1])))
+            negative_index = np.random.choice(
+                self.label_to_indices[negative_label])
             img2 = self.train_data[positive_index]
             img3 = self.train_data[negative_index]
         else:
@@ -245,12 +276,13 @@ class BalancedBatchSampler(BatchSampler):
     def __iter__(self):
         self.count = 0
         while self.count + self.batch_size < self.n_dataset:
-            classes = np.random.choice(self.labels_set, self.n_classes, replace=False)
+            classes = np.random.choice(
+                self.labels_set, self.n_classes, replace=False)
             indices = []
             for class_ in classes:
                 indices.extend(self.label_to_indices[class_][
                                self.used_label_indices_count[class_]:self.used_label_indices_count[
-                                                                         class_] + self.n_samples])
+                                   class_] + self.n_samples])
                 self.used_label_indices_count[class_] += self.n_samples
                 if self.used_label_indices_count[class_] + self.n_samples > len(self.label_to_indices[class_]):
                     np.random.shuffle(self.label_to_indices[class_])
