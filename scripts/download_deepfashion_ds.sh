@@ -51,3 +51,8 @@ echo "${MD5_SUM} *img.zip" | md5sum -c
 # 3. move to data_dir
 mv img.zip ${data_dir}
 
+# 4. Unzip the image folder
+cd ${data_dir}
+	unzip img.zip
+cd -
+
