@@ -1,17 +1,4 @@
-"""
-Implementation using pytorch ignite
-
-Reference:
-    https://github.com/pytorch/ignite/blob/v0.2.1/examples/mnist/mnist.py
-    https://fam-taro.hatenablog.com/entry/2018/12/25/021346
-
-TODO:
-    resume from checkpoint (check statedict)
-"""
-from . import HyperParams
-from .base import BaseTrainer
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
@@ -19,27 +6,23 @@ from torchvision.transforms import Compose
 from torchvision.transforms import ToTensor
 from torchvision.transforms import Normalize
 from torchvision.datasets import FashionMNIST
-from network.simple_cnn import SimpleCNN
 from ignite.engine import Events
 from ignite.engine import create_supervised_trainer
 from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
-from tqdm import tqdm
+from utils.loss import ContrastiveLoss
+from utils.datasets import SiameseMNIST
+from network.simple_cnn import SimpleConvEmbNet
+from network.siamese import SiameseNet
+from . import HyperParams
+from .base import BaseTrainer
+from config.fashion_mnist import FashionMNISTConfig
+from utils import extract_embeddings
 
 
-class FashionMNISTConfig:
-    root = "./"
-    mean = 0.28604059698879553
-    std = 0.35302424451492237
-
-
-class BaselineFashionMNISTTrainer(BaseTrainer):
-    """
-    Test tube class for constructing embbeding space only with classifcation
-    method
-    """
+class SiameseFashionMNISTTrainer(BaseTrainer):
 
     def __init__(self, log_interval=50, **kwargs):
         super().__init__(log_interval=log_interval)
@@ -55,8 +38,8 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
 
     def prepare_data_loaders(self):
         """
-        Our target is to construct embbeding space.
-        Therefore we use the "test set" as validation
+        Our target is to construct embbeding space. Therefore we use the "test set"
+        as validation
         """
         # alias
         cfg = FashionMNISTConfig
@@ -74,17 +57,30 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
         }
         train_ds = FashionMNIST(train=True, download=True, **ds_kwargs)
         val_ds = FashionMNIST(train=False, download=False, **ds_kwargs)
+
+        # ---------------------------------------------------
+        # Returns pairs of images and target same/different
+        # ---------------------------------------------------
+        siamese_train_ds = SiameseMNIST(train_ds)
+        # siamese_test_ds = SiameseMNIST(val_ds)
+
         # ----------------------------
         # Consturct loader
         # ----------------------------
-        self.train_loader = DataLoader(
-            train_ds, shuffle=True, batch_size=HyperParams.batch_size)
+        # self.train_loader = DataLoader(train_ds
+        #     train_ds, shuffle=True, batch_size=HyperParams.batch_size)
         self.val_loader = DataLoader(val_ds, shuffle=False,
-                                     batch_size=HyperParams.batch_size)
+                                     batch_size=self.hparams.batch_size)
+        self.train_loader = DataLoader(
+            siamese_train_ds, batch_size=self.hparams.batch_size, shuffle=True)
+        # self.siamese_val_loader = torch.utils.data.DataLoader(
+        #     siamese_test_ds, batch_size=batch_size, shuffle=False, **kwargs)
 
     def prepare_exp_settings(self):
         # model
-        self.model = SimpleCNN()
+        emb_net = SimpleConvEmbNet()
+        model = SiameseNet(emb_net)
+        self.model = model
 
         # optimizer
         self.optimizer = optim.Adam(
@@ -95,15 +91,16 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
             optimizer=self.optimizer, step_size=2, gamma=0.1, last_epoch=-1)
 
         # loss function
-        self.loss_fn = F.cross_entropy
+        margin = 1.0
+        self.loss_fn = ContrastiveLoss(margin)
 
         # evalution metrics
         self.eval_metrics = {
             'accuracy': Accuracy(),
             'loss': Loss(self.loss_fn)
         }
-
     # ------------------------------------------------------------------
+
     def run(self):
         self.prepare_before_run()
         # ----------------------------------
@@ -118,11 +115,10 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
         # ----------------------------------
         # log_interval = self.log_cfg['interval']
         # desc = self.log_cfg['desc']
-        # pbar = self.log_cfg['pbar']
+        pbar = self.log_cfg['pbar']
         # ----------------------------------
         # Special alias
         train_loader = self.train_loader
-        val_loader = self.val_loader
 
         # trainer
         trainer = create_supervised_trainer(
@@ -138,20 +134,12 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
 
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_training_results, **{
-                'train_loader': train_loader,
-                'evaluator': evaluator
-            })
-
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_validation_results, **{
-                'val_loader': val_loader,
-                'evaluator': evaluator
-            })
-
         trainer.run(train_loader, max_epochs=hparams.epochs)
-        self.log_cfg['pbar'].close()
+        pbar.close()
 
-    def save_model(self):
-        pass
+    def map_val_ds_to_emb_space(self):
+        #
+        emb_net = self.model.emb_net
+        loader = self.val_loader
+        embeddings, labels = extract_embeddings(emb_net, loader)
+        return embeddings, labels
