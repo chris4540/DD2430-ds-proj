@@ -85,7 +85,7 @@ class SiameseTrainer(BaseTrainer):
 
         # learning rate scheduler
         self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=2, gamma=0.1, last_epoch=-1)
+            optimizer=self.optimizer, step_size=5, gamma=0.1, last_epoch=-1)
 
         # loss function
         margin = 1.0
@@ -156,7 +156,7 @@ class SiameseTrainer(BaseTrainer):
         #
         emb_net = self.model.emb_net
         # subset
-        n_samples = 2000
+        n_samples = 28000
         sel_idx = np.random.choice(
             list(range(len(self.train_ds))),
             n_samples, replace=False)
