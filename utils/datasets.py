@@ -84,11 +84,11 @@ class DeepFashionDataset(Dataset):
         target = metadata['label']
         img_full_path = path_join(self.root, img_path)
         with open(img_full_path, 'rb') as f:
-            with Image.open(f) as img:
+            with Image.open(f) as img_file:
                 if self.transform:
-                    img = self.transform(img)
+                    img = self.transform(img_file)
                 else:
-                    img = np.asarray(img)
+                    img = np.asarray(img_file)
 
         return (img, target)
 
@@ -221,8 +221,6 @@ class Siamesize(Dataset):
             img2, c2 = self._dataset[idx2]
             # Add the index pair
             self._pair_idx_set.add((idx, idx2))
-            if t > 0:
-                print(t, len(self._pair_idx_set))
             return (img1, img2), (c1, c2, target)
         else:
             print("Going to clean the cache and try resample it again")
