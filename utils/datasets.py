@@ -46,6 +46,7 @@ class DeepFashionDataset(Dataset):
         # record down the init. args
         self.ds_type = ds_type
         self.transform = transform
+        self.root = root
 
         if self.ds_type == 'train':
             self.train = True
@@ -60,18 +61,21 @@ class DeepFashionDataset(Dataset):
         self.data = self._alldata[
             self._alldata['dataset'] == self.ds_type][['images', 'label']]
 
-        # Load the zip file
-        self.img_zip = zipfile.ZipFile(path_join(root, "img.zip"), 'r')
+        # reset the index to enable access with index
+        self.data.reset_index(drop=True, inplace=True)
 
-    def __del__(self):
-        """
-        Destructor of this class
-        """
-        # Release the resources when this class destroy
-        try:
-            self.img_zip.close()
-        except:
-            pass
+    #     # Load the zip file
+    #     self.img_zip = zipfile.ZipFile(path_join(root, "img.zip"), 'r')
+
+    # def __del__(self):
+    #     """
+    #     Destructor of this class
+    #     """
+    #     # Release the resources when this class destroy
+    #     try:
+    #         self.img_zip.close()
+    #     except:
+    #         pass
 
     def __len__(self):
         """
@@ -88,17 +92,21 @@ class DeepFashionDataset(Dataset):
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
-        metadata = self.data.iloc[idx]
+        metadata = self.data.loc[idx]
         img_path = metadata['images']
         target = metadata['label']
 
-        with self.img_zip.open(img_path) as f:
-            # Open the image file
-            img = Image.open(f)
-            # load it as the Image class do lazy evaluation
-            img.load()
-            # Transform if applicable
-            if self.transform:
+        # with self.img_zip.open(img_path) as f:
+        #     # Open the image file
+        #     img = Image.open(f)
+        #     # load it as the Image class do lazy evaluation
+        #     img.load()
+        #     # Transform if applicable
+        #     if self.transform:
+        #         img = self.transform(img)
+        img_full_path = path_join(self.root, img_path)
+        with open(img_full_path, 'rb') as f:
+            with Image.open(f) as img:
                 img = self.transform(img)
 
         return (img, target)
@@ -106,14 +114,14 @@ class DeepFashionDataset(Dataset):
     @property
     def unique_classes(self):
         """
-        Return a (copyed) list of unique classes
+        Return a list of unique classes
         """
         if not hasattr(self, '_unique_classes'):
             # build when we don't have
             self._unique_classes = self.data['label'].unique()
+            self._unique_classes.sort()
 
-        ret = list(self._unique_classes)
-        print(len(ret))
+        ret = self._unique_classes
         return ret
 
     def get_label_to_idxs(self, label):
@@ -124,7 +132,7 @@ class DeepFashionDataset(Dataset):
                 inv_map[v].append(k)
             self._label_to_idxs = inv_map
 
-        ret = self._label_to_idx[label]
+        ret = self._label_to_idxs[label]
 
         return ret
 # -------------------------------------------------------------------------------
@@ -180,7 +188,8 @@ class Siamesize(Dataset):
     def __getitem__(self, idx):
         """
         """
-        pass
+        if self.train:
+            return self._get_item_in_train_mode(idx)
 
     def _get_item_in_train_mode(self, idx):
         """
@@ -202,7 +211,7 @@ class Siamesize(Dataset):
         img1, c1 = self._dataset[idx]
 
         # draw the second data
-        n_trial = 1000
+        n_trial = 10
         for t in range(n_trial):
             if target == 1:
                 idxs = self._dataset.get_label_to_idxs(c1)
@@ -210,30 +219,33 @@ class Siamesize(Dataset):
                 idx2 = self.random_state.choice(idxs)
             else:
                 # if target == 0 then we select the class first
-                classes = self._dataset.unique_classes.remove(c1)
+                classes = self._dataset.unique_classes
+                classes = list(classes)  # make a copy
+                classes.remove(c1)
+
                 c2 = self.random_state.choice(classes)
                 idxs = self._dataset.get_label_to_idxs(c2)
                 idx2 = self.random_state.choice(idxs)
 
             if (idx, idx2) not in self._pair_idx_set:
                 break
+        # ---------------------------------------------------------------------
         if t < n_trial:
-            print(t, idx, idx2)
             img2, c2 = self._dataset[idx2]
+            # Add the index pair
+            self._pair_idx_set.add((idx, idx2))
+            if t > 0:
+                print(t, len(self._pair_idx_set))
             return (img1, img2), (c1, c2, target)
         else:
             print("Going to clean the cache and try resample it again")
+            # clean the _pair_idx_set
+            self._pair_idx_set.clear()
             return self._get_item_in_train_mode(idx)
     # --------------------------------------------------------------------------
 
     def __len__(self):
         return len(self._dataset)
-
-    def _save_pair(self, idx_pair):
-        pass
-
-    def _if_used(self, idx_pair):
-        pass
 
 
 class SiameseMNIST(Dataset):
