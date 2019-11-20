@@ -39,6 +39,6 @@ def preprocess(ds_type):
 
 
 if __name__ == '__main__':
-	preprocess('train')
+	# preprocess('train')
 	preprocess('val')
-	preprocess('test')
+	# preprocess('test')

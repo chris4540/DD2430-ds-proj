@@ -23,6 +23,9 @@ from network.resnet import ResidualEmbNetwork
 from utils.datasets import DeepFashionDataset
 from utils.datasets import Siamesize
 import numpy as np
+from torch.utils.data import Subset
+from utils import extract_embeddings
+
 
 deep_fashion_root_dir = "./deepfashion_data"
 
