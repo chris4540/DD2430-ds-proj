@@ -155,11 +155,15 @@ class SiameseMNIST(Dataset):
     Test: Creates fixed pairs for testing
     """
 
-    def __init__(self, mnist_dataset):
+    def __init__(self, mnist_dataset, rndState=13):
         self.mnist_dataset = mnist_dataset
 
         self.train = self.mnist_dataset.train
         self.transform = self.mnist_dataset.transform
+
+        # to allow train and test with diff seeds
+        self.rndState = rndState
+        random_state = np.random.RandomState(rndState)
 
         if self.train:
             self.train_labels = self.mnist_dataset.train_labels
@@ -174,8 +178,6 @@ class SiameseMNIST(Dataset):
             self.labels_set = set(self.test_labels.numpy())
             self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0]
                                      for label in self.labels_set}
-
-            random_state = np.random.RandomState(29)
 
             positive_pairs = [[i,
                                random_state.choice(

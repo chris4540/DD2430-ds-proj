@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _Loss
 
+
 class ContrastiveLoss(_Loss):
     """
     Contrastive loss
@@ -19,10 +20,10 @@ class ContrastiveLoss(_Loss):
     def forward(self, input, target):
         output1, output2 = input
         distances = (output2 - output1).pow(2).sum(1)  # squared distances
-        losses = 0.5 * (target.float() * distances +
-                        (1 + -1 * target).float() * F.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
-        if self.size_average:
-            ret = losses.mean()
-        else:
-            ret = losses.sum()
+
+        targ_f = target.float()
+        losses = .5 * (targ_f * distances +
+                       (1. - targ_f) * F.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
+
+        ret = losses.mean() if self.size_average else losses.sum()
         return ret
