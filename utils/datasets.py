@@ -294,6 +294,7 @@ class SiameseMNIST(Dataset):
                 siamese_index = np.random.choice(
                     self.label_to_indices[siamese_label])
             img2 = self.train_data[siamese_index]
+            label2 = self.train_labels[siamese_index]
         else:
             img1 = self.test_data[self.test_pairs[index][0]]
             img2 = self.test_data[self.test_pairs[index][1]]
@@ -304,7 +305,7 @@ class SiameseMNIST(Dataset):
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
-        return (img1, img2), target
+        return (img1, img2), (label1, label2, target)
 
     def __len__(self):
         return len(self.mnist_dataset)

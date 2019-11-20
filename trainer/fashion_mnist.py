@@ -20,7 +20,7 @@ from . import HyperParams
 from .base import BaseTrainer
 from config.fashion_mnist import FashionMNISTConfig
 from utils import extract_embeddings
-
+from utils.datasets import Siamesize
 
 class SiameseFashionMNISTTrainer(BaseTrainer):
 

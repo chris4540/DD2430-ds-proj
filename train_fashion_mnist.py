@@ -1,10 +1,10 @@
-from trainer.siamese import SiameseFashionMNISTTrainer
-from sklearn.manifold import TSNE
+from cuml.manifold import TSNE
+from trainer.fashion_mnist import SiameseFashionMNISTTrainer
 from utils.plot_fashion_minst import plot_embeddings
 
 # hyper_params = dict()
 trainer = SiameseFashionMNISTTrainer(
-    log_interval=5, lr=1e-2, epochs=2, batch_size=100)
+    log_interval=5, lr=1e-2, epochs=10, batch_size=100)
 trainer.run()
 
 embeddings, labels = trainer.map_val_ds_to_emb_space()
