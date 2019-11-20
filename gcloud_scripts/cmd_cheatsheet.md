@@ -53,6 +53,11 @@ gcloud compute instances stop <vm-name>
 ```bash
 gcloud compute ssh --zone=<zone> <vm-name>
 ```
+
+- Disk
+```bash
+gcloud compute disks list
+```
 -------------------------------------------------------------------
 ## Copying from / to google cloud storage
 
