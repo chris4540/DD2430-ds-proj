@@ -48,10 +48,10 @@ class DeepFashionDataset(Dataset):
         self.transform = transform
         self.root = root
 
-        if self.ds_type == 'train':
-            self.train = True
-        else:
-            self.train = False
+        # if self.ds_type == 'train' :
+        self.train = True
+        # else:
+            # self.train = False
         # ------------------------------------
         # Read the csv
         metadata_csv_file = path_join(root, self.metadata_csv)
@@ -92,9 +92,9 @@ class DeepFashionDataset(Dataset):
 
         return (img, target)
 
-    def get_metadata(self, idx):
-        metadata = self.data.loc[idx]
-        return metadata
+    # def get_metadata(self, idx):
+    #     metadata = self.data.loc[idx]
+    #     return metadata
 
     @property
     def unique_classes(self):
