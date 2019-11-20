@@ -9,21 +9,39 @@ class ContrastiveLoss(_Loss):
     Contrastive loss
     Takes embeddings of two samples and a target label == 1
     if samples are from the same class and label == 0 otherwise
+
+    Notes:
+        This is the implementation of eqn 1 in the paper
     """
 
-    def __init__(self, margin, size_average=True):
+    def __init__(self, margin, average=False):
+        """
+        Args:
+            margin (float):
+            average (bool): If taking average over batch, sum over batch otherwise
+        """
         super().__init__()
         self.margin = margin
-        self.eps = 1e-9
-        self.size_average = size_average
+        # self.eps = 1e-9
+        self.average = average
 
-    def forward(self, input, target):
-        output1, output2 = input
-        distances = (output2 - output1).pow(2).sum(1)  # squared distances
+    def forward(self, input_, target):
+        """
+        Optimize later if performace is bad in computational graph using if
+        """
+        out1, out2 = input_
 
-        targ_f = target.float()
-        losses = .5 * (targ_f * distances +
-                       (1. - targ_f) * F.relu(self.margin - (distances + self.eps).sqrt()).pow(2))
+        # The squared distance
+        dist_sq = torch.norm((out1 - out2), p=2, dim=0)  # The batch dim is 0
 
-        ret = losses.mean() if self.size_average else losses.sum()
+        if target == 1:
+            losses = dist_sq
+        else:
+            losses = F.relu(self.margin**2 - dist_sq)
+
+        if self.average:
+            ret = losses.mean()
+        else:
+            ret = losses.sum()
+
         return ret
