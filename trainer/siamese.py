@@ -22,6 +22,7 @@ from config.fashion_mnist import FashionMNISTConfig
 from network.resnet import ResidualEmbNetwork
 from utils.datasets import DeepFashionDataset
 from utils.datasets import Siamesize
+import numpy as np
 
 deep_fashion_root_dir = "./deepfashion_data"
 
@@ -58,12 +59,12 @@ class SiameseTrainer(BaseTrainer):
         # ----------------------------
         # Consturct data loader
         # ----------------------------
-        train_ds = DeepFashionDataset(
+        self.train_ds = DeepFashionDataset(
             deep_fashion_root_dir, 'train', transform=trans)
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
-        siamese_train_ds = Siamesize(train_ds)
+        siamese_train_ds = Siamesize(self.train_ds)
 
         self.train_loader = DataLoader(
             siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=2)
@@ -124,20 +125,25 @@ class SiameseTrainer(BaseTrainer):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
 
-        # trainer.add_event_handler(
-        #     Events.EPOCH_COMPLETED, self.log_training_results, **{
-        #         'train_loader': train_loader,
-        #         'evaluator': evaluator
-        #     })
-
-        # trainer.add_event_handler(
-        #     Events.EPOCH_COMPLETED, self.log_validation_results, **{
-        #         'val_loader': val_loader,
-        #         'evaluator': evaluator
-        #     })
-
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
 
     def save_model(self):
         pass
+
+    def map_train_ds_to_emb_space(self):
+        #
+        emb_net = self.model.emb_net
+        # subset
+        n_samples = 2000
+        sel_idx = np.random.choice(
+            list(range(len(self.train_ds))),
+            n_samples, replace=False)
+
+        assert len(set(sel_idx)) == n_samples
+
+        ds = Subset(train_ds, sel_idx)
+        loader = DataLoader(
+            ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=2)
+        embeddings, labels = extract_embeddings(emb_net, loader)
+        return embeddings, labels

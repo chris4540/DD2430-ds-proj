@@ -2,7 +2,6 @@
 Script to calculate the mean and std
 """
 from utils.datasets import DeepFashionDataset
-from utils.datasets import Siamesize
 from torchvision.transforms import ToTensor
 from torchvision.transforms import Compose
 from torchvision.transforms import Resize

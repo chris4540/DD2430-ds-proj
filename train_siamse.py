@@ -1,6 +1,21 @@
 from trainer.siamese import SiameseTrainer
+from cuml.manifold import TSNE
+import pickle
+
+trainer = SiameseTrainer(log_interval=1, lr=1e-2, epochs=1, batch_size=100)
+trainer.run()
+embeddings, labels = trainer.map_train_ds_to_emb_space()
 
 
-# hyper_params = dict()
-experiment = SiameseTrainer(log_interval=5, lr=1e-2, epochs=2, batch_size=100)
-experiment.run()
+tsne = TSNE(n_iter=1000, metric="euclidean")
+projected_emb = tsne.fit_transform(embeddings)
+
+
+with open('projected_emb.pkl', 'wb') as handle:
+    pickle.dump(projected_emb, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open('labels.pkl', 'wb') as handle:
+    pickle.dump(labels, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# fig = plot_embeddings(projected_emb, labels)
+# fig.savefig('fashion_mnist.png', bbox_inches='tight')
