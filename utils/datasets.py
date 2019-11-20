@@ -35,10 +35,11 @@ class SiameseMNIST(Dataset):
             self.label_to_indices = {label: np.where(self.test_labels.numpy() == label)[0]
                                      for label in self.labels_set}
 
+            # increase randomness, reduce bias
             positive_pairs = [[i,
                                random_state.choice(self.label_to_indices[self.test_labels[i].item()]),
                                1]
-                              for i in range(0, len(self.test_data), 2)]
+                              for i in np.random.choice(len(self.test_data), len(self.test_data)//2, False)]
 
             negative_pairs = [[i,
                                random_state.choice(self.label_to_indices[
@@ -47,7 +48,7 @@ class SiameseMNIST(Dataset):
                                                        )
                                                    ]),
                                0]
-                              for i in range(1, len(self.test_data), 2)]
+                              for i in np.random.choice(len(self.test_data), len(self.test_data)//2, False)]
             self.test_pairs = positive_pairs + negative_pairs
 
     def __getitem__(self, index):
