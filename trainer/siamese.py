@@ -25,6 +25,7 @@ from utils.datasets import Siamesize
 import numpy as np
 from torch.utils.data import Subset
 from utils import extract_embeddings
+import os
 
 
 deep_fashion_root_dir = "./deepfashion_data"
@@ -62,15 +63,17 @@ class SiameseTrainer(BaseTrainer):
         # ----------------------------
         # Consturct data loader
         # ----------------------------
+        # self.train_ds = DeepFashionDataset(
+        #     deep_fashion_root_dir, 'train', transform=trans)
         self.train_ds = DeepFashionDataset(
-            deep_fashion_root_dir, 'train', transform=trans)
+            deep_fashion_root_dir, 'val', transform=trans)
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
         siamese_train_ds = Siamesize(self.train_ds)
 
         self.train_loader = DataLoader(
-            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=2)
+            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count()*4)
 
     def prepare_exp_settings(self):
         # model
