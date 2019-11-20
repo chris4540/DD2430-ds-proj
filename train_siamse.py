@@ -2,8 +2,9 @@ from trainer.siamese import SiameseTrainer
 from cuml.manifold import TSNE
 import pickle
 
-trainer = SiameseTrainer(log_interval=1, lr=1e-2, epochs=1, batch_size=100)
+trainer = SiameseTrainer(log_interval=1, lr=5e-2, epochs=1, batch_size=100)
 trainer.run()
+trainer.save_model()
 embeddings, labels = trainer.map_train_ds_to_emb_space()
 
 

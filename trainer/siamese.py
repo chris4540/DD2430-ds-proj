@@ -132,7 +132,7 @@ class SiameseTrainer(BaseTrainer):
         pbar.close()
 
     def save_model(self):
-        pass
+        torch.save(self.model.state_dict(), 'siamese_resnet18.pth')
 
     def map_train_ds_to_emb_space(self):
         #
