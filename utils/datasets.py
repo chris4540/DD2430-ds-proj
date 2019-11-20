@@ -99,8 +99,54 @@ class DeepFashionDataset(Dataset):
                 img = self.transform(img)
 
         return (img, target)
-
 # -------------------------------------------------------------------------------
+
+
+class Pairize(Dataset):
+    """
+    To make a dataset return pairs from another dataset
+
+    Notes:
+        This class is working in progress
+
+    Example:
+        ds = DeepFashionDataset(...)
+        paired_ds = Pairize(ds)
+        (img1, img2), (t1, t2) = paired_ds[0]
+    """
+
+    # The random seed for selecting pairs in the mode of validation / testing
+    # Since we should always to keep the validation and test are the same
+    _eval_seed = 100
+
+    def __init__(self, dataset):
+        """
+        Args:
+            dataset (DataSet): The dataset to be pairized
+        """
+        self._dataset = dataset
+        self.train = dataset.train
+
+        # ----------------
+        # pair index set
+        # ----------------
+        self._pair_idx_set = set()
+
+        # ----------------
+        # Random state
+        # ----------------
+        if self.train:
+            # just alias the numpy random module
+            self.random_state = np.random
+        else:
+            # Use our random state container to provide sampling function
+            self.random_state = np.random.RandomState(self._eval_seed)
+
+    def _save_pair(self, idx_pair):
+        pass
+
+    def _if_used(self, idx_pair):
+        pass
 
 
 class SiameseMNIST(Dataset):
