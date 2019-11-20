@@ -15,6 +15,7 @@ pytest tests
 - [x] Install and test cuML for t-SNE visualization
 
 ## Target for week 47
+- [ ] Preprocess the deep fashion data
 - [x] Implment Siamese Embedding (Siam)
 - [ ] Implment Siam+Cat, Siam+Cat Cos
 - [ ] Implment Siam+Cat Cos
