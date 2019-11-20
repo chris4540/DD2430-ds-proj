@@ -148,7 +148,7 @@ class SiameseTrainer(BaseTrainer):
 
         assert len(set(sel_idx)) == n_samples
 
-        ds = Subset(train_ds, sel_idx)
+        ds = Subset(self.train_ds, sel_idx)
         loader = DataLoader(
             ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=2)
         embeddings, labels = extract_embeddings(emb_net, loader)
