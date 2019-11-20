@@ -1,6 +1,6 @@
-from trainer.siamese import SiameseFashionMNISTTrainer
+from trainer.siamese import SiameseTrainer
 
 
 # hyper_params = dict()
-experiment = SiameseFashionMNISTTrainer(log_interval=5, lr=1e-2, epochs=2)
+experiment = SiameseTrainer(log_interval=5, lr=1e-2, epochs=2)
 experiment.run()
