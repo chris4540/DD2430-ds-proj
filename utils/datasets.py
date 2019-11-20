@@ -92,6 +92,10 @@ class DeepFashionDataset(Dataset):
 
         return (img, target)
 
+    def get_metadata(self, idx):
+        metadata = self.data.loc[idx]
+        return metadata
+
     @property
     def unique_classes(self):
         """
