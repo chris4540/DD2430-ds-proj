@@ -134,7 +134,6 @@ class Siamesize(Dataset):
         ds = DeepFashionDataset(...)
         siamese_ds = Siamesize(ds)
         loader = DataLoader(ds, batch_size=200, pin_memory=True)
-        # Useable and faster but cannot check if the pair used.
         loader = DataLoader(ds, batch_size=200, pin_memory=True, num_workers=2)
     """
 
