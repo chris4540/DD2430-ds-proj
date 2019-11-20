@@ -64,19 +64,6 @@ class DeepFashionDataset(Dataset):
         # reset the index to enable access with index
         self.data.reset_index(drop=True, inplace=True)
 
-    #     # Load the zip file
-    #     self.img_zip = zipfile.ZipFile(path_join(root, "img.zip"), 'r')
-
-    # def __del__(self):
-    #     """
-    #     Destructor of this class
-    #     """
-    #     # Release the resources when this class destroy
-    #     try:
-    #         self.img_zip.close()
-    #     except:
-    #         pass
-
     def __len__(self):
         """
         Return the size of the dataset
@@ -95,15 +82,6 @@ class DeepFashionDataset(Dataset):
         metadata = self.data.loc[idx]
         img_path = metadata['images']
         target = metadata['label']
-
-        # with self.img_zip.open(img_path) as f:
-        #     # Open the image file
-        #     img = Image.open(f)
-        #     # load it as the Image class do lazy evaluation
-        #     img.load()
-        #     # Transform if applicable
-        #     if self.transform:
-        #         img = self.transform(img)
         img_full_path = path_join(self.root, img_path)
         with open(img_full_path, 'rb') as f:
             with Image.open(f) as img:
@@ -151,7 +129,9 @@ class Siamesize(Dataset):
     Example:
         ds = DeepFashionDataset(...)
         siamese_ds = Siamesize(ds)
-        (img1, img2), (t1, t2), y = siamese_ds[0]
+        loader = DataLoader(ds, batch_size=200, pin_memory=True)
+        # Useable and faster but cannot check if the pair used.
+        loader = DataLoader(ds, batch_size=200, pin_memory=True, num_workers=2)
     """
 
     # The random seed for selecting pairs in the mode of validation / testing
