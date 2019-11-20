@@ -1,12 +1,13 @@
-
-from cuml.manifold import TSNE
-
+import pytest
 from sklearn.manifold.t_sne import trustworthiness
 from sklearn import datasets
 import pandas as pd
 import numpy as np
+cuml = pytest.importorskip("cuml")
+cudf = pytest.importorskip("cudf")
 import cudf
-import pytest
+from cuml.manifold import TSNE
+
 
 dataset_names = ['digits', 'boston', 'iris', 'breast_cancer',
                  'diabetes']
@@ -31,7 +32,7 @@ def test_tsne(name):
     for i in range(3):
         print("iteration = ", i)
 
-        tsne = TSNE(2, random_state=i, verbose=0, learning_rate=2+i)
+        tsne = TSNE(2, random_state=i, verbose=0, learning_rate=2 + i)
 
         Y = tsne.fit_transform(X_cudf).to_pandas().values
         nans = np.sum(np.isnan(Y))
@@ -51,7 +52,7 @@ def test_tsne(name):
         del Y
 
         # Again
-        tsne = TSNE(2, random_state=i+2, verbose=1, learning_rate=2+i+2)
+        tsne = TSNE(2, random_state=i + 2, verbose=1, learning_rate=2 + i + 2)
 
         Y = tsne.fit_transform(X_cudf).to_pandas().values
         nans = np.sum(np.isnan(Y))

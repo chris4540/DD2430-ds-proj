@@ -3,7 +3,7 @@ Group 15 - Fashion Image similarity
 
 # How to run tests
 ```bash
-python -m pytest tests/test*
+pytest tests
 ```
 ## Target for week 46
 - [x] Investigate the torch training framework
