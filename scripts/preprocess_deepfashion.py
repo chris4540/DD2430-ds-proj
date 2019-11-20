@@ -33,9 +33,9 @@ def get_img_path_to_tensor_dict(ds):
 	return ret
 
 def preprocess(ds_type):
-	ds = DeepFashionDataset(root_dir, ds_type, transform=trans)
+	ds = DeepFashionDataset(Config.root_dir, ds_type, transform=Config.trans)
 	img_dict = get_img_path_to_tensor_dict(ds)
-	torch.save(test_img_dict, path_join(root_dir, 'img_{}.pkl'.format(ds_type)))
+	torch.save(test_img_dict, path_join(Config.root_dir, 'img_{}.pkl'.format(ds_type)))
 
 
 if __name__ == '__main__':
