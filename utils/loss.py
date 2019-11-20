@@ -22,7 +22,6 @@ class ContrastiveLoss(_Loss):
         """
         super().__init__()
         self.margin = margin
-        # self.eps = 1e-9
         self.average = average
 
     def forward(self, input_, target):
@@ -31,13 +30,19 @@ class ContrastiveLoss(_Loss):
         """
         out1, out2 = input_
 
+        # calculate L2 vector norm over the embedding dim
+        dist = torch.norm((out1 - out2), p=2, dim=1)
         # The squared distance
-        dist_sq = torch.norm((out1 - out2), p=2, dim=0)  # The batch dim is 0
+        dist_sq = dist.pow(2)
 
-        if target == 1:
-            losses = dist_sq
-        else:
-            losses = F.relu(self.margin**2 - dist_sq)
+        # Penalty for similar images
+        sim_img_loss = dist_sq
+
+        # Penalty for dissimilar images
+        dissim_img_loss = F.relu(self.margin**2 - dist_sq)
+
+        y = target.float()
+        losses = y * sim_img_loss + (1. - y) * dissim_img_loss
 
         if self.average:
             ret = losses.mean()
