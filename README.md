@@ -15,19 +15,21 @@ pytest tests
 - [x] Install and test cuML for t-SNE visualization
 
 ## Target for week 47
-- [ ] Preprocess the deep fashion data
+- [x] Preprocess the deep fashion data. Did the mean and std calculation
 - [x] Implment Siamese Embedding (Siam)
 - [ ] Implment Siam+Cat, Siam+Cat Cos
 - [ ] Implment Siam+Cat Cos
-- [ ] Have dataset and pairing for deep fashion dataset
-- [ ] Implment on Deep fashion
+- [ ] Have dataset and pairing for deep fashion dataset. TODO: The validation and test
+- [x] Implment on Deep fashion
 - [ ] Deploy and babysit a while
 - [ ] Automatic backup experiment directory
 - [ ] Create detailed attributes for a class. Person in charge: Hassan
 - [ ] KNN searching (ANNOY) and top-k evaluation. Out-training evalution. Person in charge: Hassan
-- [ ] Model candidate: resnet 18, vgg16(wo bn)
-
-
+- [x] Model candidate: resnet 18
+- [ ] Model candidate: vgg16 (wo bn)
+- [ ] Search classical unsupervised learning method for meansuring cluster distances
+- [ ] Balance sampling from the train dataset. Scripts to generate the metadata.csv
+- [ ] Each epoch evaluation
 
 ## Reason to use ignite
 1. Supported by pytorch offical
