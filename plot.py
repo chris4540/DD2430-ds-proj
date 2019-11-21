@@ -20,9 +20,9 @@ df = df.sort_index()
 classes = df['category'].values
 
 fig, ax = plt.subplots(1, figsize = (14, 10))
-plt.scatter(projected_emb[:,1], projected_emb[:,0], s = 0.3, c=labels, cmap='Spectral')
+plt.scatter(projected_emb[:,1], projected_emb[:,0], s=0.3, c=labels, cmap='Spectral')
 plt.setp(ax, xticks = [], yticks = [])
-cbar = plt.colorbar(boundaries = np.arange(11)-0.5)
+cbar = plt.colorbar(boundaries = np.arange(len(classes)+1)-0.5)
 cbar.set_ticks(np.arange(len(classes)))
 cbar.set_ticklabels(classes)
 plt.title('DeepFashion Embedded')
