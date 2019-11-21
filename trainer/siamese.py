@@ -63,10 +63,8 @@ class SiameseTrainer(BaseTrainer):
         # ----------------------------
         # Consturct data loader
         # ----------------------------
-        # self.train_ds = DeepFashionDataset(
-        #     deep_fashion_root_dir, 'train', transform=trans)
         self.train_ds = DeepFashionDataset(
-            deep_fashion_root_dir, 'val', transform=trans)
+            deep_fashion_root_dir, 'train', transform=trans)
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
@@ -123,6 +121,23 @@ class SiameseTrainer(BaseTrainer):
 
         evaluator = create_supervised_evaluator(
             model, metrics=eval_metrics, device=device)
+
+
+        # checkpoints
+        handler = ModelCheckpoint(dirname='./siamese_exp1', filename_prefix='siamese',
+                                  save_interval=2, n_saved=3, create_dir=True,
+                                  save_as_state_dict=True, require_empty=False)
+
+        # -------------------
+        # Callbacks / Events
+        # -------------------
+
+        # check point
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, handler, {
+                'model': model,
+                "optimizer": optimizer,
+            })
 
         # learning rate
         trainer.add_event_handler(
