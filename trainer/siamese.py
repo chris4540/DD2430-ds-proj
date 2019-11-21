@@ -125,7 +125,7 @@ class SiameseTrainer(BaseTrainer):
 
         # checkpoints
         handler = ModelCheckpoint(dirname='./siamese_exp1', filename_prefix='siamese',
-                                  save_interval=2, n_saved=3, create_dir=True,
+                                  save_interval=1, create_dir=True,
                                   save_as_state_dict=True, require_empty=False)
 
         # -------------------
