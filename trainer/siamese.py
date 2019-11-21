@@ -73,7 +73,7 @@ class SiameseTrainer(BaseTrainer):
         siamese_train_ds = Siamesize(self.train_ds)
 
         self.train_loader = DataLoader(
-            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count()*4)
+            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count())
 
     def prepare_exp_settings(self):
         # model
