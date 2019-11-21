@@ -63,17 +63,15 @@ class SiameseTrainer(BaseTrainer):
         # ----------------------------
         # Consturct data loader
         # ----------------------------
-        # self.train_ds = DeepFashionDataset(
-        #     deep_fashion_root_dir, 'train', transform=trans)
         self.train_ds = DeepFashionDataset(
-            deep_fashion_root_dir, 'val', transform=trans)
+            deep_fashion_root_dir, 'train', transform=trans)
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
         siamese_train_ds = Siamesize(self.train_ds)
 
         self.train_loader = DataLoader(
-            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count()*4)
+            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count())
 
     def prepare_exp_settings(self):
         # model
@@ -87,7 +85,7 @@ class SiameseTrainer(BaseTrainer):
 
         # learning rate scheduler
         self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=2, gamma=0.1, last_epoch=-1)
+            optimizer=self.optimizer, step_size=5, gamma=0.1, last_epoch=-1)
 
         # loss function
         margin = 1.0
@@ -124,6 +122,23 @@ class SiameseTrainer(BaseTrainer):
         evaluator = create_supervised_evaluator(
             model, metrics=eval_metrics, device=device)
 
+
+        # checkpoints
+        handler = ModelCheckpoint(dirname='./siamese_exp1', filename_prefix='siamese',
+                                  save_interval=1, create_dir=True,
+                                  save_as_state_dict=True, require_empty=False)
+
+        # -------------------
+        # Callbacks / Events
+        # -------------------
+
+        # check point
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, handler, {
+                'model': model,
+                "optimizer": optimizer,
+            })
+
         # learning rate
         trainer.add_event_handler(
             Events.EPOCH_COMPLETED, self.take_scheduler_step)
@@ -141,7 +156,7 @@ class SiameseTrainer(BaseTrainer):
         #
         emb_net = self.model.emb_net
         # subset
-        n_samples = 2000
+        n_samples = 28000
         sel_idx = np.random.choice(
             list(range(len(self.train_ds))),
             n_samples, replace=False)
