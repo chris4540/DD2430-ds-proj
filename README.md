@@ -2,8 +2,19 @@
 Group 15 - Fashion Image similarity
 
 # How to run tests
+-------------------
 ```bash
-pytest tests
+$ pytest tests
+```
+# Preparation
+------------------
+1. Download the image data
+```bash
+$ scripts/download_deepfashion_ds.sh
+```
+2. Build the metadata csv
+```bash
+$ scripts/create_deepfashion_meta.py
 ```
 ## Target for week 46
 - [x] Investigate the torch training framework
@@ -36,6 +47,8 @@ pytest tests
 2. Similar to keras
 3. Stable releases
 4. Flexible callback system
+
+
 
 ## Available Implementation and literature
 --------------------------------------------
