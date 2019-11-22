@@ -1,15 +1,25 @@
 #!/usr/bin/env python
+"""
+                          Script documentation
+Target:
+    Generate metadata csv
+
+Usage:
+    scripts/create_deepfashion_meta.py
+
+Dataset webpage:
+    http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion/AttributePrediction.html
+------------------------------------------------------------------------------
+"""
 from os.path import join as path_join
 import pandas as pd
 # ------------------------------
 class Config:
     data_root = "deepfashion_data"
     metadata_csv_fname = 'metadata.csv'
-
-
 # ------------------------------
 if __name__ == '__main__':
-    # Alias
+    # alias
     cfg = Config
 
     # get_category_names
@@ -59,6 +69,6 @@ if __name__ == '__main__':
     # map category_label to label (index)
     data_df['label'] = data_df['category'].map(cat_to_idx)
     # ---------------------------------------------------------------------------------
-    # save it
+    # save the data_df as metadata csv
     file = path_join(cfg.data_root, cfg.metadata_csv_fname)
     data_df.to_csv(file, index=False)

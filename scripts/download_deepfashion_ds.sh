@@ -5,7 +5,7 @@
 #       Category and Attribute Prediction Benchmark of DeepFashion
 #
 #  Usage:
-#     ./download_deepfashion_ds.sh
+#     scripts/download_deepfashion_ds.sh
 #
 #  Dataset webpage:
 #     http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion/AttributePrediction.html
