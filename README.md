@@ -59,10 +59,6 @@ pytest tests
 - https://github.com/khanhnamle1994/fashion-recommendation
 + https://github.com/PlabanM1/FashionNet/blob/master/FashionNet.ipynb
 
-#### Useful tool
-1. https://github.com/fastai/fastai
-2. https://github.com/williamFalcon/pytorch-lightning
-
 #### Implmentaion Reference
 - Keras
   - https://github.com/keras-team/keras/blob/master/examples/mnist_siamese.py

@@ -22,8 +22,8 @@ def test_get_item_from_ds():
     # Get one item
     im, target = train_ds[100]
 
-    # check if an image
-    assert isinstance(im, Image.Image)
+    # check img
+    assert isinstance(im, np.ndarray)
 
     # Check class label
     assert target > 0

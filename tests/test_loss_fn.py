@@ -10,7 +10,10 @@ def test_contrastive_loss():
     emb_size = 512
     emb_vec1 = torch.randn((batch_size, emb_size))
     emb_vec2 = torch.randn((batch_size, emb_size))
-    targets = torch.randint(2, size=(100, 1))
+    y = torch.randint(2, size=(100, 1))
+    c1 = torch.randint(10, size=(100, 1))
+    c2 = torch.randint(10, size=(100, 1))
+    targets = (c1, c2, y)
 
     loss_fn = ContrastiveLoss(margin=1.0)
 
