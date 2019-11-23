@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SimpleCNN(nn.Module):
+class SimpleConvEmbNet(nn.Module):
     """
     This is a simplest network to fit with fashion minst dataset.
     This network is to fasten the development time for the cycle:
@@ -12,13 +12,12 @@ class SimpleCNN(nn.Module):
         - visualization
     """
 
-    def __init__(self, last_layer='logits'):
-
+    def __init__(self, emb_size=50):
         super().__init__()
+        self.emb_size = emb_size
 
-        self.last_layer = last_layer
-
-        self.convnet = nn.Sequential(
+        # The convolution block
+        self.conv = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=5),
             nn.ReLU(),
             nn.MaxPool2d(2, stride=2),
@@ -27,32 +26,53 @@ class SimpleCNN(nn.Module):
             nn.MaxPool2d(2, stride=2)
         )
 
+        # flatten layer
+        self.flatten = nn.Flatten()
+
+        # Fully connected block, expect the last layer to reduce to num class
         self.fc = nn.Sequential(
             nn.Linear(32 * 4 * 4, 256),
             nn.ReLU(),
-            nn.Linear(256, 50),
+            nn.Linear(256, self.emb_size),
         )
 
+    def forward(self, x):
+        out = self.conv(x)
+        out = self.flatten(out)
+        out = self.fc(out)
+        ret = out
+        return ret
+
+
+class SimpleCNN(nn.Module):
+    """
+    Using composition instead of inherit
+    """
+
+    def __init__(self, emb_size=50, n_classes=10):
+        super().__init__()
+        self.emb_size = emb_size
+        self.n_classes = n_classes
+
+        self._emb_net = SimpleConvEmbNet(emb_size)
         #
         self.clsf = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(50, 10))
+            nn.Linear(emb_size, n_classes)
+        )
 
     def forward(self, x):
-        """
-        Return a logits vector
-        """
-        out = self.fwd_to_emb_layer(x)
+        # Forward to embbeding space
+        emb_vec = self._emb_net(x)
 
-        if self.last_layer == 'logits':
-            out = self.clsf(out)
-        return out
+        # forward to logit vector
+        logit_vec = self.clsf(emb_vec)
+        ret = logit_vec
+        return ret
 
-    def fwd_to_emb_layer(self, x):
-        out = self.convnet(x)
-        out = out.view(out.size()[0], -1)
-        out = self.fc(out)
-        return out
+    @property
+    def emb_net(self):
+        return self._emb_net
 
 
 if __name__ == '__main__':

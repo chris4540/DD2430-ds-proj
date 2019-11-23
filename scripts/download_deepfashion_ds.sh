@@ -5,7 +5,7 @@
 #       Category and Attribute Prediction Benchmark of DeepFashion
 #
 #  Usage:
-#     ./download_deepfashion_ds.sh
+#     scripts/download_deepfashion_ds.sh
 #
 #  Dataset webpage:
 #     http://mmlab.ie.cuhk.edu.hk/projects/DeepFashion/AttributePrediction.html
@@ -50,4 +50,9 @@ echo "${MD5_SUM} *img.zip" | md5sum -c
 
 # 3. move to data_dir
 mv img.zip ${data_dir}
+
+# 4. Unzip the image folder
+cd ${data_dir}
+	unzip img.zip
+cd -
 

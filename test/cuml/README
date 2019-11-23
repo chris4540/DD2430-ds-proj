@@ -1,8 +1,0 @@
-This folder contains file adopt from RAPIDS - cuML repo
-
-The test file is for verify if the python package works
-
-Usage:
-```bash
-pytest ./test_tsne.py
-```

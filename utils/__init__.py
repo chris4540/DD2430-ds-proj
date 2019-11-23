@@ -15,7 +15,8 @@ def map_images_to_embbedings(model, images):
     with torch.no_grad():
         if USING_CUDA:
             images = images.cuda()
-        ret = model.fwd_to_emb_layer(images)
+
+        ret = model(images)
 
     ret = ret.cpu()
 
@@ -23,6 +24,10 @@ def map_images_to_embbedings(model, images):
 
 
 def extract_embeddings(model, dataloader):
+    """
+    TODO:
+    model should have attr emb_net and use it
+    """
 
     emb_list = []
     label_list = []
@@ -34,3 +39,55 @@ def extract_embeddings(model, dataloader):
     labels = np.concatenate(label_list)
 
     return embeddings, labels
+
+
+class PairIndexSet:
+
+    def __init__(self):
+        self._set = set()
+
+    @staticmethod
+    def _as_ordered_tuple(tuple_):
+        """
+        Make a tuple to have smaller element at the first place
+
+        E.g.:
+        _as_ordered_tuple((2, 1))
+        # (1, 2)
+        _as_ordered_tuple((1, 100))
+        # (1, 100)
+        """
+        a, b = tuple_
+        if a > b:
+            a, b = b, a  # swap
+        return a, b
+
+    def __contains__(self, elem):
+        if not isinstance(elem, tuple):
+            raise ValueError("Input must be tuple")
+        # reorder if a > b
+        a, b = self._as_ordered_tuple(elem)
+        # check if in the internal set
+        ret = ((a, b) in self._set)
+        return ret
+
+    def contains(self, elem):
+        return self.__contains__(elem)
+
+    def __repr__(self):
+        return repr(self._set)
+
+    def add(self, elem):
+        """
+        Add element elem to the set.
+        """
+        self._set.add(self._as_ordered_tuple(elem))
+
+    def clear(self):
+        """
+        Remove all elements from the set.
+        """
+        self._set.clear()
+
+    def __len__(self):
+        return len(self._set)
