@@ -1,3 +1,7 @@
+"""
+Reference:
+http://cpsc.yale.edu/sites/default/files/files/tr222.pdf
+"""
 import torch
 
 class StandardScaler:

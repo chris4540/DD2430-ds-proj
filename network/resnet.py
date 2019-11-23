@@ -39,7 +39,7 @@ class ResidualNetwork(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(self._emb_net.emb_dim, 256),
             nn.ReLU(inplace=True),
-            nn.Linear(256, num_classes))
+            nn.Linear(256, nb_classes))
 
     def forward(self, x):
         emb_vec = self._emb_net(x)

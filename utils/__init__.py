@@ -24,6 +24,10 @@ def map_images_to_embbedings(model, images):
 
 
 def extract_embeddings(model, dataloader):
+    """
+    TODO:
+    model should have attr emb_net and use it
+    """
 
     emb_list = []
     label_list = []
