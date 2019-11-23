@@ -48,7 +48,7 @@ class StandardScaler:
             n = batch_samples
             # the second term of R.H.S of 1.5b
             extra_term = (self._partial_sum * n / m - batch_sum)**2
-            extra_term = extra_term * m / (n * (m + n))
+            extra_term = extra_term * m / n / (m + n)
             self._partial_sum_of_sq_of_dev += batch_sum_of_sq_of_dev + extra_term
 
         # Partial sum (T term)

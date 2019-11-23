@@ -10,7 +10,6 @@ cur_path = os.path.realpath(__file__)
 cur_dir = os.path.dirname(cur_path)
 parent_dir = cur_dir[:cur_dir.rfind(os.path.sep)]
 sys.path.insert(0, parent_dir)
-print(parent_dir)
 # --------------------------------------------
 from utils.datasets import DeepFashionDataset
 from utils.preprocessing import StandardScaler
