@@ -1,3 +1,7 @@
+"""
+TODO:
+    Documentaion
+"""
 import numpy as np
 import pandas as pd
 from os.path import join as path_join
@@ -175,20 +179,42 @@ class Siamesize(Dataset):
         else:
             # Use our random state container to provide sampling function
             self.random_state = np.random.RandomState(self._eval_seed)
+            # build pair idx and is similar onces
+            self._build_pairs_for_eval()
+
+    def _build_pairs_for_eval(self):
+        """
+        Prebuild a list of tuple for evalation
+        """
+        rec = list()
+        for idx1 in range(len(self)):
+            idx2, is_similar = self._get_sec_idx_and_is_similar(idx1)
+            rec.append((idx2, is_similar))
+        self._pairs_for_eval = rec
 
     @property
     def train(self):
         return self._dataset.train
 
     def __getitem__(self, idx1):
-        idx2, is_similar = _get_paired_idx_and_is_similar(idx1)
+
+        # get the second item idx of the pair and the target val
+        idx2, target = self._get_idx2_and_target(idx1)
+
         # return the img and class
         img1, c1 = self._dataset[idx1]
         img2, c2 = self._dataset[idx2]
         return (img1, img2), (c1, c2, target)
 
+    def _get_idx2_and_target(self, idx1):
+        if self.train:
+            idx2, target = self._get_sec_idx_and_is_similar(idx1)
+        else:
+            idx2, target = self._pairs_for_eval[idx1]
 
-    def _get_paired_idx_and_is_similar(self, idx, recur_cnt=0):
+        return idx2, target
+
+    def _get_sec_idx_and_is_similar(self, idx1, recur_cnt=0):
         """
         Args:
             idx (int):
@@ -198,13 +224,11 @@ class Siamesize(Dataset):
         # Handel limit case of recursion
         # -----------------------------------
         if recur_cnt > self.n_trial:
+            print("cleaning...")
             # clean the pair indices set
             self._pair_idx_set.clear()
             # Sample it again from cnt = 0
-            return self._get_paired_idx_and_is_similar(idx, 0)
-
-        # alias
-        idx1 = idx
+            return self._get_sec_idx_and_is_similar(idx1, 0)
 
         # generate target
         is_similar = self.random_state.choice([0, 1])
@@ -213,12 +237,14 @@ class Siamesize(Dataset):
         idx2 = self._get_another_idx(idx1, is_similar)
 
         # Check if pairs are identical or already sampled
-        if (idx1 == idx2) or (idx, idx2) in self._pair_idx_set:
+        if (idx1 == idx2) or (idx1, idx2) in self._pair_idx_set:
             # fail case, draw again by recursion
-            return self._get_paired_idx_and_is_similar(idx, recur_cnt+1)
+            return self._get_sec_idx_and_is_similar(idx1, recur_cnt+1)
         else:
-            # Successful case, add the pair to record set and return
-            self._pair_idx_set.add((idx1, idx2))
+            # Successful case, add the pair to record set and return when training
+            if self.train:
+                self._pair_idx_set.add((idx1, idx2))
+
             return idx2, is_similar
 
     def _get_another_idx(self, idx1, is_similar):
@@ -233,7 +259,6 @@ class Siamesize(Dataset):
             idx2 = self.random_state.choice(idxs)
         else:
             # select the second element classs first, where c1 must not be c2
-
             classes = self._dataset.classes
             classes = list(classes)  # make a copy
             classes.remove(c1)
@@ -243,59 +268,6 @@ class Siamesize(Dataset):
             idx2 = self.random_state.choice(idxs)
 
         return idx2
-
-
-
-    # def _get_item_idcs_in_train_mode(self, idx):
-    #     """
-    #     Args:
-    #         idx (int):
-
-    #     Outline:
-    #         0.
-    #         1. Select the pair with (idx, idx_2), where idx_2 is randomly selected
-    #         2. Check if already sampled
-    #         3. Goto 1 if sampled already, but limit the number of trials
-    #         4. When the number of trial > sqrt(the size of the dataset), clean the PairIndexSet
-    #         5. return (img1, img2), (c1, c2, target)
-    #     """
-    #     # randomly choose if the classes of the training pair are the same or not.
-    #     target = self.random_state.choice([0, 1])
-
-    #     # take the img1 and c1 with idx from self._dataset
-    #     img1, c1 = self._dataset[idx]
-
-    #     # draw the second data
-    #     n_trial = 10
-    #     for t in range(n_trial):
-    #         if target == 1:
-    #             idxs = self._dataset.get_label_to_idxs(c1)
-    #             # Therefore, the class of self._dataset[idxs] are c1
-    #             idx2 = self.random_state.choice(idxs)
-    #         else:
-    #             # if target == 0 then we select the class first
-    #             classes = self._dataset.unique_classes
-    #             classes = list(classes)  # make a copy
-    #             classes.remove(c1)
-
-    #             c2 = self.random_state.choice(classes)
-    #             idxs = self._dataset.get_label_to_idxs(c2)
-    #             idx2 = self.random_state.choice(idxs)
-
-    #         if (idx, idx2) not in self._pair_idx_set:
-    #             break
-    #     # ---------------------------------------------------------------------
-    #     if t < n_trial:
-    #         img2, c2 = self._dataset[idx2]
-    #         # Add the index pair
-    #         self._pair_idx_set.add((idx, idx2))
-    #         return (img1, img2), (c1, c2, target)
-    #     else:
-    #         print("Going to clean the cache and try resample it again")
-    #         # clean the _pair_idx_set
-    #         self._pair_idx_set.clear()
-    #         return self._get_item_idcs_in_train_mode(idx)
-    # --------------------------------------------------------------------------
 
     def __len__(self):
         return len(self._dataset)
