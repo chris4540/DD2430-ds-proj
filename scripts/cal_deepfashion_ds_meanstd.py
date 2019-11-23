@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
 Script to calculate the mean and std
+Usage:
+    ./scripts/cal_deepfashion_ds_meanstd.py
 """
 import os.path
 import sys
@@ -36,8 +38,3 @@ if __name__ == "__main__":
     print(scalar._var)
     print(scalar._std)
     print("--------------------")
-    # --------------------
-    # tensor([0.7511, 0.7189, 0.7069])
-    # tensor([0.0652, 0.0717, 0.0737])
-    # tensor([0.2554, 0.2679, 0.2715])
-    # --------------------
