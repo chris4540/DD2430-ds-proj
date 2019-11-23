@@ -4,6 +4,9 @@ Group 15 - Fashion Image similarity
 # How to run tests
 -------------------
 ```bash
+$ pip install pytest pytest-timeout
+```
+```bash
 $ pytest tests
 ```
 # Preparation
