@@ -25,6 +25,9 @@ class Siamesize(Dataset):
         siamese_ds = Siamesize(ds)
         loader = DataLoader(ds, batch_size=200, pin_memory=True)
         loader = DataLoader(ds, batch_size=200, pin_memory=True, num_workers=2)
+
+    TODO:
+        - Check edge case if two pairs are identical
     """
 
     # The random seed for selecting pairs in the mode of validation / testing
