@@ -73,6 +73,7 @@ if __name__ == '__main__':
     data_df['category'] = data_df['category_label'].apply(lambda x: categories[x - 1])
 
     print("---------- Metadata Summary ----------")
+    print("Dataset split:")
     print(data_df['dataset'].value_counts())
     nclasses = data_df['category'].nunique()
     print("# of classes: ", nclasses)
@@ -105,7 +106,11 @@ if __name__ == '__main__':
             .apply(lambda c: c.sample(n_sample_data, random_state=cfg.rnd_seed))
             .reset_index(drop=True))
     print("------ Sampled Metadata Summary ------")
+    print("Class distribution")
     print(sampled_df[col].value_counts())
+    print("--------")
+    print("Dataset split:")
+    print(sampled_df['dataset'].value_counts())
     print("--------------------------------------")
     # save the sampled data as  csv
     file = path_join(cfg.data_root, cfg.sampled_data_csv_fname)
