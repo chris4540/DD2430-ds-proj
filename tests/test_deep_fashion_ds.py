@@ -26,4 +26,4 @@ def test_get_item_from_ds():
     assert isinstance(im, np.ndarray)
 
     # Check class label
-    assert target > 0
+    assert target => 0
