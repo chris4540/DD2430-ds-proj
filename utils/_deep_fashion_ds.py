@@ -3,6 +3,7 @@ import pandas as pd
 from os.path import join as path_join
 from PIL import Image
 from torch.utils.data import Dataset
+from . import PairIndexSet
 
 class DeepFashionDataset(Dataset):
     """
@@ -39,10 +40,10 @@ class DeepFashionDataset(Dataset):
         self.transform = transform
         self.root = root
 
-        # if self.ds_type == 'train' :
-        self.train = True
-        # else:
-            # self.train = False
+        if self.ds_type == 'train' :
+            self.train = True
+        else:
+            self.train = False
         # ------------------------------------
         # Read the csv
         metadata_csv_file = path_join(root, self.metadata_csv)
@@ -87,9 +88,9 @@ class DeepFashionDataset(Dataset):
         cls.metadata_csv = csvfile
 
     @property
-    def unique_classes(self):
+    def classes(self):
         """
-        Return a list of unique classes
+        Return a list of classes that the data has.
         """
         if not hasattr(self, '_unique_classes'):
             # build when we don't have
@@ -108,5 +109,193 @@ class DeepFashionDataset(Dataset):
             self._label_to_idxs = inv_map
 
         ret = self._label_to_idxs[label]
-
         return ret
+
+    def get_idx_to_target(self, idx):
+        """
+        Get the class (target) of the data by selected index
+
+        Args:
+            idx (int): the index of the data
+
+        Return:
+            the class (probabaly the class index)
+
+        Notes:
+            This function is to skip the transform of img calculation
+        """
+        metadata = self.data.loc[idx]
+        target = metadata['label']
+        return target
+
+
+class Siamesize(Dataset):
+    """
+    To make a dataset return pairs from another dataset for Siamese training
+
+    Notes:
+        This class is working in progress
+
+    Example:
+        ds = DeepFashionDataset(...)
+        siamese_ds = Siamesize(ds)
+        loader = DataLoader(ds, batch_size=200, pin_memory=True)
+        loader = DataLoader(ds, batch_size=200, pin_memory=True, num_workers=2)
+
+    TODO:
+        - Check edge case if two pairs are identical
+    """
+
+    # The random seed for selecting pairs in the mode of validation / testing
+    # Since we should always to keep the validation and test are the same
+    _eval_seed = 100
+
+    # max number of recusive drawing
+    n_trial = 5
+
+    def __init__(self, dataset):
+        """
+        Args:
+            dataset (DataSet): The dataset to be pairized
+        """
+
+        self._dataset = dataset
+
+        # ------------------------------------------------
+        # pair indices set; for recording returned pairs
+        # ------------------------------------------------
+        self._pair_idx_set = PairIndexSet()
+
+        # ----------------
+        # Random state
+        # ----------------
+        if self.train:
+            # just alias the numpy random module
+            self.random_state = np.random  # enable to set a gobal seed
+        else:
+            # Use our random state container to provide sampling function
+            self.random_state = np.random.RandomState(self._eval_seed)
+
+    @property
+    def train(self):
+        return self._dataset.train
+
+    def __getitem__(self, idx1):
+        idx2, is_similar = _get_paired_idx_and_is_similar(idx1)
+        # return the img and class
+        img1, c1 = self._dataset[idx1]
+        img2, c2 = self._dataset[idx2]
+        return (img1, img2), (c1, c2, target)
+
+
+    def _get_paired_idx_and_is_similar(self, idx, recur_cnt=0):
+        """
+        Args:
+            idx (int):
+            recur_cnt (int): recursion count
+        """
+        # -----------------------------------
+        # Handel limit case of recursion
+        # -----------------------------------
+        if recur_cnt > self.n_trial:
+            # clean the pair indices set
+            self._pair_idx_set.clear()
+            # Sample it again from cnt = 0
+            return self._get_paired_idx_and_is_similar(idx, 0)
+
+        # alias
+        idx1 = idx
+
+        # generate target
+        is_similar = self.random_state.choice([0, 1])
+
+        # Get the second item for pairing
+        idx2 = self._get_another_idx(idx1, is_similar)
+
+        # Check if pairs are identical or already sampled
+        if (idx1 == idx2) or (idx, idx2) in self._pair_idx_set:
+            # fail case, draw again by recursion
+            return self._get_paired_idx_and_is_similar(idx, recur_cnt+1)
+        else:
+            # Successful case, add the pair to record set and return
+            self._pair_idx_set.add((idx1, idx2))
+            return idx2, is_similar
+
+    def _get_another_idx(self, idx1, is_similar):
+        # Get the class of idx1 first
+        c1 = self._dataset.get_idx_to_target(idx1)
+
+        if is_similar:
+            # similar if the pair are in the same class
+            idxs = self._dataset.get_label_to_idxs(c1)
+
+            # Therefore, the class of self._dataset[idxs] are c1
+            idx2 = self.random_state.choice(idxs)
+        else:
+            # select the second element classs first, where c1 must not be c2
+
+            classes = self._dataset.classes
+            classes = list(classes)  # make a copy
+            classes.remove(c1)
+
+            c2 = self.random_state.choice(classes)
+            idxs = self._dataset.get_label_to_idxs(c2)
+            idx2 = self.random_state.choice(idxs)
+
+        return idx2
+
+
+
+    # def _get_item_idcs_in_train_mode(self, idx):
+    #     """
+    #     Args:
+    #         idx (int):
+
+    #     Outline:
+    #         0.
+    #         1. Select the pair with (idx, idx_2), where idx_2 is randomly selected
+    #         2. Check if already sampled
+    #         3. Goto 1 if sampled already, but limit the number of trials
+    #         4. When the number of trial > sqrt(the size of the dataset), clean the PairIndexSet
+    #         5. return (img1, img2), (c1, c2, target)
+    #     """
+    #     # randomly choose if the classes of the training pair are the same or not.
+    #     target = self.random_state.choice([0, 1])
+
+    #     # take the img1 and c1 with idx from self._dataset
+    #     img1, c1 = self._dataset[idx]
+
+    #     # draw the second data
+    #     n_trial = 10
+    #     for t in range(n_trial):
+    #         if target == 1:
+    #             idxs = self._dataset.get_label_to_idxs(c1)
+    #             # Therefore, the class of self._dataset[idxs] are c1
+    #             idx2 = self.random_state.choice(idxs)
+    #         else:
+    #             # if target == 0 then we select the class first
+    #             classes = self._dataset.unique_classes
+    #             classes = list(classes)  # make a copy
+    #             classes.remove(c1)
+
+    #             c2 = self.random_state.choice(classes)
+    #             idxs = self._dataset.get_label_to_idxs(c2)
+    #             idx2 = self.random_state.choice(idxs)
+
+    #         if (idx, idx2) not in self._pair_idx_set:
+    #             break
+    #     # ---------------------------------------------------------------------
+    #     if t < n_trial:
+    #         img2, c2 = self._dataset[idx2]
+    #         # Add the index pair
+    #         self._pair_idx_set.add((idx, idx2))
+    #         return (img1, img2), (c1, c2, target)
+    #     else:
+    #         print("Going to clean the cache and try resample it again")
+    #         # clean the _pair_idx_set
+    #         self._pair_idx_set.clear()
+    #         return self._get_item_idcs_in_train_mode(idx)
+    # --------------------------------------------------------------------------
+
+    def __len__(self):
+        return len(self._dataset)

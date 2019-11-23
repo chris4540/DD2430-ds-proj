@@ -2,7 +2,6 @@
 Reference:
 https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 """
-from . import PairIndexSet
 import numpy as np
 import pandas as pd
 from os.path import join as path_join
@@ -11,118 +10,8 @@ from torch.utils.data import Dataset
 from torch.utils.data.sampler import BatchSampler
 # alias
 from ._deep_fashion_ds import DeepFashionDataset
+from ._deep_fashion_ds import Siamesize
 
-
-class Siamesize(Dataset):
-    """
-    To make a dataset return pairs from another dataset for Siamese training
-
-    Notes:
-        This class is working in progress
-
-    Example:
-        ds = DeepFashionDataset(...)
-        siamese_ds = Siamesize(ds)
-        loader = DataLoader(ds, batch_size=200, pin_memory=True)
-        loader = DataLoader(ds, batch_size=200, pin_memory=True, num_workers=2)
-
-    TODO:
-        - Check edge case if two pairs are identical
-    """
-
-    # The random seed for selecting pairs in the mode of validation / testing
-    # Since we should always to keep the validation and test are the same
-    _eval_seed = 100
-
-    def __init__(self, dataset):
-        """
-        Args:
-            dataset (DataSet): The dataset to be pairized
-        """
-        self._dataset = dataset
-        self.train = dataset.train
-
-        # ----------------
-        # pair index set
-        # ----------------
-        self._pair_idx_set = PairIndexSet()
-
-        # ----------------
-        # Random state
-        # ----------------
-        if self.train:
-            # just alias the numpy random module
-            self.random_state = np.random  # enable to set a gobal seed
-        else:
-            # Use our random state container to provide sampling function
-            self.random_state = np.random.RandomState(self._eval_seed)
-            self._build_eval_pairs()
-
-    def _build_eval_pairs(self):
-        """
-        To build evaluation dataset which is balanced
-        """
-        pass
-
-    def __getitem__(self, idx):
-        """
-        """
-        if self.train:
-            return self._get_item_in_train_mode(idx)
-
-    def _get_item_in_train_mode(self, idx):
-        """
-        Args:
-            idx (int):
-
-        Outline:
-            0.
-            1. Select the pair with (idx, idx_2), where idx_2 is randomly selected
-            2. Check if already sampled
-            3. Goto 1 if sampled already, but limit the number of trials
-            4. When the number of trial > sqrt(the size of the dataset), clean the PairIndexSet
-            5. return (img1, img2), (c1, c2, target)
-        """
-        # randomly choose if the classes of the training pair are the same or not.
-        target = self.random_state.choice([0, 1])
-
-        # take the img1 and c1 with idx from self._dataset
-        img1, c1 = self._dataset[idx]
-
-        # draw the second data
-        n_trial = 10
-        for t in range(n_trial):
-            if target == 1:
-                idxs = self._dataset.get_label_to_idxs(c1)
-                # Therefore, the class of self._dataset[idxs] are c1
-                idx2 = self.random_state.choice(idxs)
-            else:
-                # if target == 0 then we select the class first
-                classes = self._dataset.unique_classes
-                classes = list(classes)  # make a copy
-                classes.remove(c1)
-
-                c2 = self.random_state.choice(classes)
-                idxs = self._dataset.get_label_to_idxs(c2)
-                idx2 = self.random_state.choice(idxs)
-
-            if (idx, idx2) not in self._pair_idx_set:
-                break
-        # ---------------------------------------------------------------------
-        if t < n_trial:
-            img2, c2 = self._dataset[idx2]
-            # Add the index pair
-            self._pair_idx_set.add((idx, idx2))
-            return (img1, img2), (c1, c2, target)
-        else:
-            print("Going to clean the cache and try resample it again")
-            # clean the _pair_idx_set
-            self._pair_idx_set.clear()
-            return self._get_item_in_train_mode(idx)
-    # --------------------------------------------------------------------------
-
-    def __len__(self):
-        return len(self._dataset)
 
 
 class SiameseMNIST(Dataset):
