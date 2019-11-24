@@ -24,13 +24,6 @@ from utils.datasets import Siamesize
 from .metrics import SimilarityAccuracy
 
 
-
-class FashionMNISTConfig:
-    root = "./"
-    mean = 0.28604059698879553
-    std = 0.35302424451492237
-
-
 class BaselineFashionMNISTTrainer(BaseTrainer):
     """
     Test tube class for constructing embbeding space only with classifcation

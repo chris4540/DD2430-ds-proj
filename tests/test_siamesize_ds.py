@@ -3,6 +3,29 @@ import pytest
 from utils.datasets import DeepFashionDataset
 from utils.datasets import Siamesize
 from config.deep_fashion import root_dir
+from config.fashion_mnist import FashionMNISTConfig
+from utils.datasets import FashionMNIST
+
+def test_siamesize_mnist_basic():
+    cfg = FashionMNISTConfig
+
+    ds_kwargs = {
+        'root': cfg.root,
+    }
+    train_ds = FashionMNIST(train=True, download=True, **ds_kwargs)
+    siamese_ds = Siamesize(train_ds)
+
+    targets = list()
+    for idx1 in range(5000):
+        idx2, is_similar = siamese_ds._get_idx2_and_target(idx1)
+        assert is_similar in [0, 1]
+        assert idx1 != idx2
+        # store the targets
+        targets.append(is_similar)
+
+    # empirically check probability of the target getting 0 or 1
+    prob = np.mean(targets)
+    assert 0.4 <= prob <= 0.6
 
 def test_siamesize_train_ds_basic():
     """
