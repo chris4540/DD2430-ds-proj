@@ -6,7 +6,7 @@ from utils.loss import ContrastiveLoss
 
 
 def test_contrastive_loss():
-    batch_size = 100
+    batch_size = 10
     emb_size = 512
     emb_vec1 = torch.randn((batch_size, emb_size))
     emb_vec2 = torch.randn((batch_size, emb_size))
