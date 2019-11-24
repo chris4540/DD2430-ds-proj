@@ -75,6 +75,9 @@ class SiameseMNIST(Dataset):
             img1 = self.test_data[self.test_pairs[index][0]]
             img2 = self.test_data[self.test_pairs[index][1]]
             target = self.test_pairs[index][2]
+            # tmp fix
+            label1 = 0
+            label2 = 0
 
         img1 = Image.fromarray(img1.numpy(), mode='L')
         img2 = Image.fromarray(img2.numpy(), mode='L')
