@@ -12,17 +12,16 @@ from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
-from utils.datasets import SiameseMNIST
 from network.simple_cnn import SimpleConvEmbNet
 from network.siamese import SiameseNet
 from . import HyperParams
 from .loss import ContrastiveLoss
 from .base import BaseTrainer
+from .metrics import SimilarityAccuracy
 from config.fashion_mnist import FashionMNISTConfig
 from utils import extract_embeddings
 from utils.datasets import Siamesize
-from .metrics import SimilarityAccuracy
-
+from utils.datasets import FashionMNIST
 
 class BaselineFashionMNISTTrainer(BaseTrainer):
     """
@@ -186,10 +185,8 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
-        # from torch.utils.data import Subset
-        # siamese_train_ds = Subset(siamese_train_ds, list(range(500)))
-        siamese_train_ds = SiameseMNIST(train_ds)
-        siamese_test_ds = SiameseMNIST(val_ds)
+        siamese_train_ds = Siamesize(train_ds)
+        siamese_test_ds = Siamesize(val_ds)
 
         # ----------------------------
         # Consturct loader
@@ -277,10 +274,3 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
 
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
-
-    # def map_val_ds_to_emb_space(self):
-    #     #
-    #     emb_net = self.model.emb_net
-    #     loader = self.val_loader
-    #     embeddings, labels = extract_embeddings(emb_net, loader)
-    #     return embeddings, labels

@@ -4,7 +4,7 @@ import numpy as np
 USING_CUDA = torch.cuda.is_available()
 
 
-def map_images_to_embbedings(model, images):
+def map_imgs_to_embs(model, images):
     """
     With the deep network, project images / batch of images to embedding space
     """
@@ -32,7 +32,7 @@ def extract_embeddings(model, dataloader):
     emb_list = []
     label_list = []
     for imgs, lbls in dataloader:
-        emb_list.append(map_images_to_embbedings(model, imgs).numpy())
+        emb_list.append(map_imgs_to_embs(model.emb_net, imgs).numpy())
         label_list.append(lbls.numpy())
 
     embeddings = np.concatenate(emb_list, axis=0)

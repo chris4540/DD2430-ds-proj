@@ -12,9 +12,9 @@ class SimpleConvEmbNet(nn.Module):
         - visualization
     """
 
-    def __init__(self, emb_size=50):
+    def __init__(self, emb_dim=50):
         super().__init__()
-        self.emb_size = emb_size
+        self.emb_dim = emb_dim
 
         # The convolution block
         self.conv = nn.Sequential(
@@ -33,7 +33,7 @@ class SimpleConvEmbNet(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(32 * 4 * 4, 256),
             nn.ReLU(),
-            nn.Linear(256, self.emb_size),
+            nn.Linear(256, self.emb_dim),
         )
 
     def forward(self, x):
@@ -49,16 +49,16 @@ class SimpleCNN(nn.Module):
     Using composition instead of inherit
     """
 
-    def __init__(self, emb_size=50, n_classes=10):
+    def __init__(self, emb_dim=50, n_classes=10):
         super().__init__()
-        self.emb_size = emb_size
+        self.emb_dim = emb_dim
         self.n_classes = n_classes
 
-        self._emb_net = SimpleConvEmbNet(emb_size)
+        self._emb_net = SimpleConvEmbNet(emb_dim)
         #
         self.clsf = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(emb_size, n_classes)
+            nn.Linear(emb_dim, n_classes)
         )
 
     def forward(self, x):
