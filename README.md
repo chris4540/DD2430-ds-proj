@@ -33,7 +33,7 @@ $ scripts/create_deepfashion_meta.py
 - [x] Implment Siamese Embedding (Siam)
 - [ ] Implment Siam+Cat, Siam+Cat Cos
 - [ ] Implment Siam+Cat Cos
-- [ ] Have dataset and pairing for deep fashion dataset. TODO: The validation and test
+- [x] Have dataset and pairing for deep fashion dataset. TODO: The validation and test
 - [x] Implment on Deep fashion
 - [ ] Deploy and babysit a while
 - [ ] Automatic backup experiment directory
@@ -43,7 +43,9 @@ $ scripts/create_deepfashion_meta.py
 - [ ] Model candidate: vgg16 (wo bn)
 - [ ] Search classical unsupervised learning method for meansuring cluster distances
 - [ ] Balance sampling from the train dataset. Scripts to generate the metadata.csv
-- [ ] Each epoch evaluation
+- [x] Each epoch supervised evaluation
+- [ ] Each epoch unspervised evaluation
+
 
 ## Reason to use ignite
 1. Supported by pytorch offical
