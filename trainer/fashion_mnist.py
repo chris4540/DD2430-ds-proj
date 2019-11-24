@@ -12,11 +12,11 @@ from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
-from utils.loss import ContrastiveLoss
 from utils.datasets import SiameseMNIST
 from network.simple_cnn import SimpleConvEmbNet
 from network.siamese import SiameseNet
 from . import HyperParams
+from .loss import ContrastiveLoss
 from .base import BaseTrainer
 from config.fashion_mnist import FashionMNISTConfig
 from utils import extract_embeddings
