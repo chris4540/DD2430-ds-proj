@@ -218,7 +218,7 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
 
         # learning rate scheduler
         self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=2, gamma=0.5, last_epoch=-1)
+            optimizer=self.optimizer, step_size=5, gamma=0.5, last_epoch=-1)
 
         # loss function
         margin = 1.0
@@ -286,7 +286,7 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
     # top k retrival acc
     def log_topk_retrieval_acc(self, engine):
         """
-        For tracking the performance during training
+        For tracking the performance during training top K Precision
         """
         train_embs, train_labels = extract_embeddings(self.model, self.train_loader)
         val_embs, val_labels = extract_embeddings(self.model, self.val_loader)
@@ -300,20 +300,29 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         # build a forest of trees
         t.build(n_trees)
         # ----------------------------------
-        correct = 0
-        cnt = 0
-        n_retrieval = 5
+        top_k_corrects = dict()
+        # Meassure Prec@[5, 10, 20, 30]
         for i, emb_vec in enumerate(val_embs):
             correct_cls = val_labels[i]
-            idx = t.get_nns_by_vector(emb_vec, n_retrieval)
-            top_k_classes = train_labels[idx]
-            correct += np.sum(top_k_classes == correct_cls)
-            cnt += len(idx)
+            for k in [5, 10, 20, 30]:
+                idx = t.get_nns_by_vector(emb_vec, k)
+                top_k_classes = train_labels[idx]
+                correct = np.sum(top_k_classes == correct_cls)
+                accum_corr = top_k_corrects.get(k, 0)
+                top_k_corrects[k] = accum_corr + correct
+        # -------------------------------------------------
+        # calculate back the acc
+        top_k_acc = dict()
+        for k in [5, 10, 20, 30]:
+            top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
 
-        top_k_acc = correct / cnt
         tqdm.write(
-            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy: {:.2f}"
-            .format(engine.state.epoch, top_k_acc)
+            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
+            .format(engine.state.epoch)
         )
+
+        for k in [5, 10, 20, 30]:
+            tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
+
 
 
