@@ -9,11 +9,14 @@
     ],
     "files.exclude": {
     	"deepfashion_data/img": true,
+        "FashionMNIST": true
     },
     "search.exclude": {
-    	"deepfashion_data/img": true,
+        "deepfashion_data/img": true,
+        "FashionMNIST": true
     },
     "files.watcherExclude": {
-    	"deepfashion_data/img": true,
+        "deepfashion_data/img": true,
+        "FashionMNIST": true
     }
 }
