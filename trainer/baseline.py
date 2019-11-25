@@ -7,7 +7,7 @@ from . import HyperParams
 from .base import BaseTrainer
 from .loss import ContrastiveLoss
 # from .metrics import SimilarityAccuracy
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
 from torchvision.transforms import Resize
@@ -34,7 +34,7 @@ class ClassificationTrainer(BaseTrainer):
 
     _debug = False
 
-    def __init__(self, exp_folder, log_interval=50, **kwargs):
+    def __init__(self, exp_folder, log_interval=1, **kwargs):
         super().__init__(exp_folder=exp_folder, log_interval=log_interval)
         self.hparams = HyperParams(**kwargs)
         self.hparams.display()
@@ -83,18 +83,17 @@ class ClassificationTrainer(BaseTrainer):
 
     def prepare_exp_settings(self):
         # model
-        # emb_net = ResidualEmbNetwork()
-        # model = SiameseNet(emb_net)
-        model = ResidualNetwork(nb_classes=15)
+        n_classes = len(self.train_ds.classes)
+        model = ResidualNetwork(nb_classes=n_classes)
         self.model = model
 
         # optimizer
         self.optimizer = optim.Adam(
             self.model.parameters(), lr=self.hparams.lr)
 
-        # learning rate scheduler
-        self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=2, gamma=0.5, last_epoch=-1)
+        iter_per_epoch = len(self.train_ds) / self.hparams.batch_size
+        self.scheduler = CosineAnnealingLR(
+            self.optimizer, T_max=iter_per_epoch, eta_min=1e-5)
 
         # loss function
         self.loss_fn = F.cross_entropy
@@ -152,7 +151,7 @@ class ClassificationTrainer(BaseTrainer):
 
         # learning rate
         trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.take_scheduler_step)
+            Events.ITERATION_COMPLETED, self.take_scheduler_step)
 
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
@@ -168,8 +167,8 @@ class ClassificationTrainer(BaseTrainer):
                 'val_loader': self.val_loader,
                 'evaluator': evaluator
             })
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
+        # trainer.add_event_handler(
+        #     Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
 
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()

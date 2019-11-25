@@ -11,6 +11,7 @@ class HyperParams:
     batch_size = 256
     lr = 5e-2
     epochs = 5
+    eta_min = 1e-5
 
     def __init__(self, **kwargs):
         for k in kwargs.keys():

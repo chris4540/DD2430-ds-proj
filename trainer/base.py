@@ -65,8 +65,12 @@ class BaseTrainer(AdstractTrainer):
     def take_scheduler_step(self, engine):
         self.scheduler.step()
         # Print out
-        tqdm.write("Learning Rate - Epoch: {}  Learning Rate: {}"
-                   .format(engine.state.epoch, self.scheduler.get_lr()))
+        # train_loader_len = self.log_cfg['train_loader_len']
+        # log_interval = self.log_cfg['interval']
+        # n_iter = (engine.state.iteration - 1) % train_loader_len + 1
+        # if n_iter % log_interval == 0:
+        #     tqdm.write("Learning Rate - Iter: {}  Learning Rate: {}"
+        #                .format(n_iter, self.scheduler.get_lr()[0]))
         # lr = self.scheduler.get_lr()[0]
 
     def log_training_loss(self, engine):
