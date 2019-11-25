@@ -21,5 +21,6 @@
         "**/.git/objects/**": true,
         "**/.git/subtree-cache/**": true,
         "**/.pytest_cache/**": true,
+        "**/exp_folders/**": true,
     }
 }

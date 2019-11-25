@@ -5,6 +5,7 @@ import torch.optim as optim
 from . import HyperParams
 from .base import BaseTrainer
 from .loss import ContrastiveLoss
+from .metrics import SimilarityAccuracy
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -14,7 +15,6 @@ from torchvision.transforms import Normalize
 from ignite.engine import Events
 from ignite.engine import create_supervised_trainer
 from ignite.engine import create_supervised_evaluator
-from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
 from network.siamese import SiameseNet
@@ -24,9 +24,13 @@ from utils.datasets import Siamesize
 from torch.utils.data import Subset
 from utils import extract_embeddings
 from config.deep_fashion import DeepFashionConfig as cfg
+from tqdm import tqdm
+from annoy import AnnoyIndex
 
 
 class SiameseTrainer(BaseTrainer):
+
+    _debug = False
 
     def __init__(self, exp_folder, log_interval=50, **kwargs):
         super().__init__(exp_folder=exp_folder, log_interval=log_interval)
@@ -57,20 +61,40 @@ class SiameseTrainer(BaseTrainer):
 
             ])
 
-        # ----------------------------
-        # Consturct data loader
-        # ----------------------------
         self.train_ds = DeepFashionDataset(
             cfg.root_dir, 'train', transform=trans)
+        self.val_ds = DeepFashionDataset(
+            cfg.root_dir, 'val', transform=trans)
+
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
         siamese_train_ds = Siamesize(self.train_ds)
+        # siamese_val_ds = Siamesize(self.val_ds)
 
-        # self.train_loader = DataLoader(
-        #     siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count())
-        self.train_loader = DataLoader(
-            siamese_train_ds, batch_size=self.hparams.batch_size)
+        if self._debug:
+            # For debug use
+            self.train_ds = Subset(self.train_ds, range(5000))
+            self.val_ds = Subset(self.val_ds, range(1000))
+            siamese_train_ds = Subset(siamese_train_ds, range(5000))
+            # siamese_val_ds = Subset(siamese_train_ds, range(1000))
+
+        # ----------------------------
+        # Consturct data loader
+        # ----------------------------
+        loader_kwargs = {
+            'pin_memory': True,
+            'batch_size': self.hparams.batch_size,
+            'num_workers': os.cpu_count(),
+        }
+
+        self.siamese_train_loader = DataLoader(
+            siamese_train_ds, **loader_kwargs)
+        self.siamese_val_loader = DataLoader(
+            siamese_train_ds, **loader_kwargs)
+
+        # Set the lenght for tqdm
+        self.train_loader_len = len(self.siamese_train_loader)
 
     def prepare_exp_settings(self):
         # model
@@ -92,6 +116,7 @@ class SiameseTrainer(BaseTrainer):
 
         # evalution metrics
         self.eval_metrics = {
+            'accuracy': SimilarityAccuracy(margin),
             'loss': Loss(self.loss_fn)
         }
     # ------------------------------------------------------------------
@@ -107,13 +132,11 @@ class SiameseTrainer(BaseTrainer):
         device = self.device
         eval_metrics = self.eval_metrics
         hparams = self.hparams
-        # ----------------------------------
-        # log_interval = self.log_cfg['interval']
-        # desc = self.log_cfg['desc']
+        #
         pbar = self.log_cfg['pbar']
         # ----------------------------------
         # Special alias
-        train_loader = self.train_loader
+        train_loader = self.siamese_train_loader
 
         # trainer
         trainer = create_supervised_trainer(
@@ -150,25 +173,68 @@ class SiameseTrainer(BaseTrainer):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
 
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.log_training_results, **{
+                'train_loader': train_loader,
+                'evaluator': evaluator
+            })
+
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.log_validation_results, **{
+                'val_loader': self.siamese_val_loader,
+                'evaluator': evaluator
+            })
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
 
-    def save_model(self):
-        torch.save(self.model.state_dict(), 'siamese_resnet18.pth')
+    # top k retrival acc
+    def log_topk_retrieval_acc(self, engine):
+        """
+        For tracking the performance during training top K Precision
+        """
+        loader_kwargs = {
+            'pin_memory': True,
+            'num_workers': os.cpu_count(),
+            'batch_size': self.hparams.batch_size
+        }
+        train_loader = DataLoader(self.train_ds, **loader_kwargs)
+        val_loader = DataLoader(self.val_ds, **loader_kwargs)
 
-    def map_train_ds_to_emb_space(self):
-        #
-        emb_net = self.model.emb_net
-        # subset
-        n_samples = 28000
-        sel_idx = np.random.choice(
-            list(range(len(self.train_ds))),
-            n_samples, replace=False)
+        # ----------------------------------
+        train_embs, train_labels = extract_embeddings(self.model, train_loader)
+        val_embs, val_labels = extract_embeddings(self.model, val_loader)
+        emb_dim = train_embs.shape[1]
+        # ----------------------------------
+        t = AnnoyIndex(emb_dim, metric='euclidean')
+        n_trees = 100
+        for i, emb_vec in enumerate(train_embs):
+            t.add_item(i, emb_vec)
+        # build a forest of trees
+        tqdm.write("Building ANN forest...")
+        t.build(n_trees)
+        # ----------------------------------
+        top_k_corrects = dict()
+        # Meassure Prec@[5, 10, 20, 30]
+        for i, emb_vec in enumerate(val_embs):
+            correct_cls = val_labels[i]
+            for k in [5, 10, 20, 30]:
+                idx = t.get_nns_by_vector(emb_vec, k)
+                top_k_classes = train_labels[idx]
+                correct = np.sum(top_k_classes == correct_cls)
+                accum_corr = top_k_corrects.get(k, 0)
+                top_k_corrects[k] = accum_corr + correct
+        # -------------------------------------------------
+        # calculate back the acc
+        top_k_acc = dict()
+        for k in [5, 10, 20, 30]:
+            top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
 
-        assert len(set(sel_idx)) == n_samples
+        tqdm.write(
+            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
+            .format(engine.state.epoch)
+        )
 
-        ds = Subset(self.train_ds, sel_idx)
-        loader = DataLoader(
-            ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=2)
-        embeddings, labels = extract_embeddings(emb_net, loader)
-        return embeddings, labels
+        for k in [5, 10, 20, 30]:
+            tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))

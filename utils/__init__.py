@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+from tqdm import tqdm
 USING_CUDA = torch.cuda.is_available()
 
 
@@ -31,7 +31,7 @@ def extract_embeddings(model, dataloader):
 
     emb_list = []
     label_list = []
-    for imgs, lbls in dataloader:
+    for imgs, lbls in tqdm(dataloader, desc='Extract emb vecs'):
         emb_list.append(map_imgs_to_embs(model.emb_net, imgs).numpy())
         label_list.append(lbls.numpy())
 

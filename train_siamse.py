@@ -1,11 +1,11 @@
 from trainer.siamese import SiameseTrainer
-# from cuml.manifold import TSNE
+from cuml.manifold import TSNE
 import pickle
 import sys
 
 trainer = SiameseTrainer(
     exp_folder="./exp_folders/exp_siamese",
-    log_interval=1, lr=5e-2, epochs=5, batch_size=100)
+    log_interval=1, lr=5e-2, epochs=2, batch_size=100)
 trainer.run()
 sys.exit(0)
 trainer.save_model()

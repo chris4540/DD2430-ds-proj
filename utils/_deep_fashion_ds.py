@@ -12,6 +12,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from . import PairIndexSet
 
+
 class DeepFashionDataset(Dataset):
     """
     Abstracted data represetation for deep fashion dataset
@@ -47,7 +48,7 @@ class DeepFashionDataset(Dataset):
         self.transform = transform
         self.root = root
 
-        if self.ds_type == 'train' :
+        if self.ds_type == 'train':
             self.train = True
         else:
             self.train = False
@@ -242,7 +243,7 @@ class Siamesize(Dataset):
         # Check if pairs are identical or already sampled
         if (idx1 == idx2) or (idx1, idx2) in self._pair_idx_set:
             # fail case, draw again by recursion
-            return self._get_sec_idx_and_is_similar(idx1, recur_cnt+1)
+            return self._get_sec_idx_and_is_similar(idx1, recur_cnt + 1)
         else:
             # Successful case, add the pair to record set and return when training
             if self.train:
