@@ -8,6 +8,7 @@ checkpoints
 FashionMNIST
 
 *.png
+exp_folders/
 ############## PYTHON IGNORE LIST ##################
 # Byte-compiled / optimized / DLL files
 __pycache__/
