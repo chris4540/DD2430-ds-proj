@@ -17,15 +17,13 @@ from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
-from utils.datasets import SiameseMNIST
-from network.simple_cnn import SimpleConvEmbNet
 from network.siamese import SiameseNet
-from config.fashion_mnist import FashionMNISTConfig
 from network.resnet import ResidualEmbNetwork
 from utils.datasets import DeepFashionDataset
 from utils.datasets import Siamesize
 from torch.utils.data import Subset
 from utils import extract_embeddings
+from config.deep_fashion import DeepFashionConfig as cfg
 
 
 class SiameseTrainer(BaseTrainer):
@@ -53,9 +51,9 @@ class SiameseTrainer(BaseTrainer):
         # data transform
         trans = Compose(
             [
-                Resize((224, 224)),
+                Resize(cfg.sizes),
                 ToTensor(),
-                Normalize([0.7511, 0.7189, 0.7069], [0.2554, 0.2679, 0.2715]),
+                Normalize(cfg.mean, cfg.std),
 
             ])
 
@@ -63,14 +61,16 @@ class SiameseTrainer(BaseTrainer):
         # Consturct data loader
         # ----------------------------
         self.train_ds = DeepFashionDataset(
-            deep_fashion_root_dir, 'train', transform=trans)
+            cfg.root_dir, 'train', transform=trans)
         # ---------------------------------------------------
         # Returns pairs of images and target same/different
         # ---------------------------------------------------
         siamese_train_ds = Siamesize(self.train_ds)
 
+        # self.train_loader = DataLoader(
+        #     siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count())
         self.train_loader = DataLoader(
-            siamese_train_ds, batch_size=self.hparams.batch_size, pin_memory=True, num_workers=os.cpu_count())
+            siamese_train_ds, batch_size=self.hparams.batch_size)
 
     def prepare_exp_settings(self):
         # model
