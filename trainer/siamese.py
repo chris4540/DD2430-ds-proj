@@ -123,9 +123,14 @@ class SiameseTrainer(BaseTrainer):
             model, metrics=eval_metrics, device=device)
 
         # checkpoints
-        handler = ModelCheckpoint(dirname='./siamese_exp1', filename_prefix='siamese',
-                                  save_interval=1, create_dir=True,
-                                  save_as_state_dict=True, require_empty=False)
+        handler = ModelCheckpoint(
+            dirname=str(self.exp_folder / 'chkptr'),
+            filename_prefix='',
+            save_interval=1,
+            n_saved=hparams.epochs,
+            create_dir=True,
+            save_as_state_dict=True,
+            require_empty=False)
 
         # -------------------
         # Callbacks / Events
