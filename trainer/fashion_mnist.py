@@ -285,6 +285,9 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
 
     # top k retrival acc
     def log_topk_retrieval_acc(self, engine):
+        """
+        For tracking the performance during training
+        """
         train_embs, train_labels = extract_embeddings(self.model, self.train_loader)
         val_embs, val_labels = extract_embeddings(self.model, self.val_loader)
         emb_dim = train_embs.shape[1]

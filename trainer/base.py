@@ -29,10 +29,10 @@ class BaseTrainer(AdstractTrainer):
     def prepare_logging(self):
 
         # Try to get train_loader_len
-        if hasattr(self, 'train_loader'):
-            train_loader_len = len(self.train_loader)
-        elif hasattr(self, 'train_loader_len'):
+        if hasattr(self, 'train_loader_len'):
             train_loader_len = self.train_loader_len
+        elif hasattr(self, 'train_loader'):
+            train_loader_len = len(self.train_loader)
         else:
             raise RuntimeError(
                 "Unable to determine the length of train loader.")
