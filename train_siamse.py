@@ -1,5 +1,5 @@
 from trainer.siamese import SiameseTrainer
-from cuml.manifold import TSNE
+# from cuml.manifold import TSNE
 import pickle
 
 trainer = SiameseTrainer(

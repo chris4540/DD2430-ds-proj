@@ -52,7 +52,9 @@ class HyperParams:
     def save_to_txt(self, fname):
         with open(fname, 'w') as f:
             self.print_on(f)
+            f.write('\n')
 
     def save_to_json(self, fname):
-        with open('fname', 'w') as f:
-            json.dump(self._get_param_dict(), f)
+        with open(fname, 'w') as f:
+            json.dump(self._get_param_dict(), f, indent=2)
+            f.write('\n')
