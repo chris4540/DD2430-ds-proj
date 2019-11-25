@@ -1,5 +1,6 @@
-from trainer.baseline import BaselineFashionMNIST
+from trainer.baseline import ClassificationTrainer
 
 
-experiment = BaselineFashionMNIST(log_interval=5, lr=1e-2, epochs=2)
-experiment.run()
+trainer = ClassificationTrainer(
+    exp_folder="./exp_folders/exp_clsf", log_interval=5, lr=1e-2, epochs=10)
+trainer.run()

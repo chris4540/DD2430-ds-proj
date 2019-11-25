@@ -5,7 +5,7 @@ import sys
 
 trainer = SiameseTrainer(
     exp_folder="./exp_folders/exp_siamese",
-    log_interval=1, lr=5e-2, epochs=2, batch_size=100)
+    log_interval=1, lr=5e-2, epochs=10, batch_size=256)
 trainer.run()
 sys.exit(0)
 trainer.save_model()

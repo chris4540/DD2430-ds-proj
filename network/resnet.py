@@ -1,10 +1,12 @@
 import torchvision.models as models
 import torch.nn as nn
 
+
 class ResidualEmbNetwork(nn.Module):
     """
     The embbeding network
     """
+
     def __init__(self, depth=18):
         super().__init__()
 
@@ -32,13 +34,15 @@ class ResidualEmbNetwork(nn.Module):
         out = self.flatten(out)
         return out
 
+
 class ResidualNetwork(nn.Module):
 
-    def __init__(self, depth, nb_classes=46):
+    def __init__(self, depth=18, nb_classes=46):
+        super().__init__()
         self._emb_net = ResidualEmbNetwork(depth)
         self.fc = nn.Sequential(
             nn.Linear(self._emb_net.emb_dim, 256),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.Linear(256, nb_classes))
 
     def forward(self, x):
@@ -49,6 +53,3 @@ class ResidualNetwork(nn.Module):
     @property
     def emb_net(self):
         return self._emb_net
-
-
-

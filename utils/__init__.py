@@ -1,3 +1,13 @@
+"""
+Implementation using pytorch ignite
+
+Reference:
+    https://github.com/pytorch/ignite/blob/v0.2.1/examples/mnist/mnist.py
+    https://fam-taro.hatenablog.com/entry/2018/12/25/021346
+
+TODO:
+    resume from checkpoint (check statedict)
+"""
 import torch
 import numpy as np
 from tqdm import tqdm

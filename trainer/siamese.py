@@ -108,7 +108,7 @@ class SiameseTrainer(BaseTrainer):
 
         # learning rate scheduler
         self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=5, gamma=0.1, last_epoch=-1)
+            optimizer=self.optimizer, step_size=2, gamma=0.5, last_epoch=-1)
 
         # loss function
         margin = 1.0
