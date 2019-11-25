@@ -33,7 +33,7 @@ class BaseTrainer(AdstractTrainer):
 
         # mkdir -p <exp_folder>
         self.exp_folder = Path(exp_folder)
-        self.exp_folder.mkdir()
+        self.exp_folder.mkdir(parents=True)
 
     def prepare_before_run(self):
         self.prepare_data_loaders()
