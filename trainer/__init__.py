@@ -1,5 +1,6 @@
 import sys
 import inspect
+import json
 
 
 class HyperParams:
@@ -52,5 +53,6 @@ class HyperParams:
         with open(fname, 'w') as f:
             self.print_on(f)
 
-    def save_as_json(self, fname):
-        pass
+    def save_to_json(self, fname):
+        with open('fname', 'w') as f:
+            json.dump(self._get_param_dict(), f)

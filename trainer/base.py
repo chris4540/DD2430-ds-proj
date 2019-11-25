@@ -1,3 +1,5 @@
+from pathlib import Path
+from datetime import datetime
 from tqdm import tqdm
 from .abc import AdstractTrainer
 
@@ -16,10 +18,22 @@ class BaseTrainer(AdstractTrainer):
         'interval': 50,
     }
 
-    def __init__(self, log_interval):
+    def __init__(self, exp_folder, log_interval):
         if not isinstance(log_interval, int) or not log_interval > 0:
             raise ValueError("log_interval is a positive integer.")
         self.log_cfg['interval'] = log_interval
+        # ------------------------------
+        # Setup experiement folder
+
+        # Move it if folder exists
+        folder = Path(exp_folder)
+        if folder.exists():
+            folder_suffix = datetime.utcnow().strftime("%y%m%d_%H%M%S")
+            folder.rename(str(folder) + '_' + folder_suffix)
+
+        # mkdir -p <exp_folder>
+        self.exp_folder = Path(exp_folder)
+        self.exp_folder.mkdir()
 
     def prepare_before_run(self):
         self.prepare_data_loaders()

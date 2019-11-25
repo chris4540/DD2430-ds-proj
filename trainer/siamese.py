@@ -1,5 +1,10 @@
+import os
+import numpy as np
 import torch
 import torch.optim as optim
+from . import HyperParams
+from .base import BaseTrainer
+from .loss import ContrastiveLoss
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -12,38 +17,32 @@ from ignite.engine import create_supervised_evaluator
 from ignite.metrics import Accuracy
 from ignite.metrics import Loss
 from ignite.handlers import ModelCheckpoint
-from utils.loss import ContrastiveLoss
 from utils.datasets import SiameseMNIST
 from network.simple_cnn import SimpleConvEmbNet
 from network.siamese import SiameseNet
-from . import HyperParams
-from .base import BaseTrainer
 from config.fashion_mnist import FashionMNISTConfig
 from network.resnet import ResidualEmbNetwork
 from utils.datasets import DeepFashionDataset
 from utils.datasets import Siamesize
-import numpy as np
 from torch.utils.data import Subset
 from utils import extract_embeddings
-import os
 
-
-deep_fashion_root_dir = "./deepfashion_data"
 
 class SiameseTrainer(BaseTrainer):
 
-    def __init__(self, log_interval=50, **kwargs):
-        super().__init__(log_interval=log_interval)
+    def __init__(self, exp_folder, log_interval=50, **kwargs):
+        super().__init__(exp_folder=exp_folder, log_interval=log_interval)
         self.hparams = HyperParams(**kwargs)
         self.hparams.display()
-        # self.hparams.save_to_txt('hp.txt')
+
+        self.hparams.save_to_txt(self.exp_folder / 'hparams.txt')
+        self.hparams.save_to_json(self.exp_folder / 'hparams.json')
 
         # check if cpu or gpu
         if torch.cuda.is_available():
             self.device = 'cuda'
         else:
             self.device = 'cpu'
-
 
     def prepare_data_loaders(self):
         """
@@ -96,6 +95,7 @@ class SiameseTrainer(BaseTrainer):
             'loss': Loss(self.loss_fn)
         }
     # ------------------------------------------------------------------
+
     def run(self):
         self.prepare_before_run()
         # ----------------------------------
@@ -121,7 +121,6 @@ class SiameseTrainer(BaseTrainer):
 
         evaluator = create_supervised_evaluator(
             model, metrics=eval_metrics, device=device)
-
 
         # checkpoints
         handler = ModelCheckpoint(dirname='./siamese_exp1', filename_prefix='siamese',

@@ -26,6 +26,7 @@ from utils.datasets import FashionMNIST
 from tqdm import tqdm
 from annoy import AnnoyIndex
 
+
 class BaselineFashionMNISTTrainer(BaseTrainer):
     """
     Test tube class for constructing embbeding space only with classifcation
@@ -54,9 +55,9 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
 
         # data transform
         data_transform = Compose([
-                ToTensor(),
-                Normalize((cfg.mean,), (cfg.std,))
-            ])
+            ToTensor(),
+            Normalize((cfg.mean,), (cfg.std,))
+        ])
 
         # ----------------------------
         # Consturct data loader
@@ -149,10 +150,11 @@ class BaselineFashionMNISTTrainer(BaseTrainer):
     def save_model(self):
         pass
 
+
 class SiameseFashionMNISTTrainer(BaseTrainer):
 
-    def __init__(self, log_interval=50, **kwargs):
-        super().__init__(log_interval=log_interval)
+    def __init__(self, exp_folder, log_interval=50, **kwargs):
+        super().__init__(exp_folder, log_interval=log_interval)
         self.hparams = HyperParams(**kwargs)
         self.hparams.display()
         # self.hparams.save_to_txt('hp.txt')
@@ -195,7 +197,7 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         # Consturct loader
         # ----------------------------
         self.train_loader = DataLoader(train_ds, shuffle=False,
-                                     batch_size=self.hparams.batch_size)
+                                       batch_size=self.hparams.batch_size)
         self.val_loader = DataLoader(val_ds, shuffle=False,
                                      batch_size=self.hparams.batch_size)
 
@@ -257,7 +259,6 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         evaluator = create_supervised_evaluator(
             model, metrics=eval_metrics, device=device)
 
-
         # learning rate
         trainer.add_event_handler(
             Events.EPOCH_COMPLETED, self.take_scheduler_step)
@@ -282,13 +283,14 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
 
-
     # top k retrival acc
+
     def log_topk_retrieval_acc(self, engine):
         """
         For tracking the performance during training top K Precision
         """
-        train_embs, train_labels = extract_embeddings(self.model, self.train_loader)
+        train_embs, train_labels = extract_embeddings(
+            self.model, self.train_loader)
         val_embs, val_labels = extract_embeddings(self.model, self.val_loader)
         emb_dim = train_embs.shape[1]
 
@@ -323,6 +325,3 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
 
         for k in [5, 10, 20, 30]:
             tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
-
-
-
