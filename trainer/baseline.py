@@ -3,10 +3,9 @@ import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
-from . import HyperParams
+from .hparams import HyperParams
 from .base import BaseTrainer
 from .loss import ContrastiveLoss
-# from .metrics import SimilarityAccuracy
 from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -167,8 +166,9 @@ class ClassificationTrainer(BaseTrainer):
                 'val_loader': self.val_loader,
                 'evaluator': evaluator
             })
-        # trainer.add_event_handler(
-        #     Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
+
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
 
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
