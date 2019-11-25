@@ -16,7 +16,10 @@
         "FashionMNIST": true
     },
     "files.watcherExclude": {
-        "deepfashion_data/img": true,
-        "FashionMNIST": true
+        "**/deepfashion_data/img/**": true,
+        "**/FashionMNIST/**": true,
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.pytest_cache/**": true,
     }
 }
