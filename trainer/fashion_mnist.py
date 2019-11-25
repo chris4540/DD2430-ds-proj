@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+import numpy as np
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose
@@ -22,6 +23,8 @@ from config.fashion_mnist import FashionMNISTConfig
 from utils import extract_embeddings
 from utils.datasets import Siamesize
 from utils.datasets import FashionMNIST
+from tqdm import tqdm
+from annoy import AnnoyIndex
 
 class BaselineFashionMNISTTrainer(BaseTrainer):
     """
@@ -191,8 +194,10 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         # ----------------------------
         # Consturct loader
         # ----------------------------
-        # self.val_loader = DataLoader(val_ds, shuffle=False,
-        #                              batch_size=self.hparams.batch_size)
+        self.train_loader = DataLoader(train_ds, shuffle=False,
+                                     batch_size=self.hparams.batch_size)
+        self.val_loader = DataLoader(val_ds, shuffle=False,
+                                     batch_size=self.hparams.batch_size)
 
         batch_size = self.hparams.batch_size
         self.siamese_train_loader = DataLoader(
@@ -213,7 +218,7 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
 
         # learning rate scheduler
         self.scheduler = StepLR(
-            optimizer=self.optimizer, step_size=2, gamma=0.1, last_epoch=-1)
+            optimizer=self.optimizer, step_size=2, gamma=0.5, last_epoch=-1)
 
         # loss function
         margin = 1.0
@@ -260,17 +265,52 @@ class SiameseFashionMNISTTrainer(BaseTrainer):
         trainer.add_event_handler(
             Events.ITERATION_COMPLETED, self.log_training_loss)
 
-        trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_training_results, **{
-                'train_loader': train_loader,
-                'evaluator': evaluator
-            })
+        # trainer.add_event_handler(
+        #     Events.EPOCH_COMPLETED, self.log_training_results, **{
+        #         'train_loader': train_loader,
+        #         'evaluator': evaluator
+        #     })
 
+        # trainer.add_event_handler(
+        #     Events.EPOCH_COMPLETED, self.log_validation_results, **{
+        #         'val_loader': self.siamese_val_loader,
+        #         'evaluator': evaluator
+        #     })
         trainer.add_event_handler(
-            Events.EPOCH_COMPLETED, self.log_validation_results, **{
-                'val_loader': self.siamese_val_loader,
-                'evaluator': evaluator
-            })
+            Events.EPOCH_COMPLETED, self.log_topk_retrieval_acc)
 
         trainer.run(train_loader, max_epochs=hparams.epochs)
         pbar.close()
+
+
+    # top k retrival acc
+    def log_topk_retrieval_acc(self, engine):
+        train_embs, train_labels = extract_embeddings(self.model, self.train_loader)
+        val_embs, val_labels = extract_embeddings(self.model, self.val_loader)
+        emb_dim = train_embs.shape[1]
+
+        # ----------------------------------
+        t = AnnoyIndex(emb_dim, metric='euclidean')
+        n_trees = 100
+        for i, emb_vec in enumerate(train_embs):
+            t.add_item(i, emb_vec)
+        # build a forest of trees
+        t.build(n_trees)
+        # ----------------------------------
+        correct = 0
+        cnt = 0
+        n_retrieval = 5
+        for i, emb_vec in enumerate(val_embs):
+            correct_cls = val_labels[i]
+            idx = t.get_nns_by_vector(emb_vec, n_retrieval)
+            top_k_classes = train_labels[idx]
+            correct += np.sum(top_k_classes == correct_cls)
+            cnt += len(idx)
+
+        top_k_acc = correct / cnt
+        tqdm.write(
+            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy: {:.2f}"
+            .format(engine.state.epoch, top_k_acc)
+        )
+
+
