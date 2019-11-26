@@ -1,6 +1,6 @@
 import torchvision.models as models
 import torch.nn as nn
-
+import torch.nn.functional as F
 
 class ResidualEmbNetwork(nn.Module):
     """
@@ -9,6 +9,7 @@ class ResidualEmbNetwork(nn.Module):
 
     def __init__(self, depth=18):
         super().__init__()
+
 
         depth_opts = [18, 34, 50]
         if depth not in depth_opts:
@@ -29,9 +30,12 @@ class ResidualEmbNetwork(nn.Module):
         self.net = nn.Sequential(*(list(net.children())[:-1]))
         self.flatten = nn.Flatten()
 
-    def forward(self, x):
+    def forward(self, x, l2_normalize=False):
         out = self.net(x)
         out = self.flatten(out)
+
+        if l2_normalize:
+            out = F.normalize(out, p=2, dim=1)
         return out
 
 
@@ -46,8 +50,12 @@ class ResidualNetwork(nn.Module):
             nn.Linear(256, nb_classes))
 
     def forward(self, x):
-        emb_vec = self._emb_net(x)
-        out = self.fc(emb_vec)
+        emb_vecs = self._emb_net(x)
+        out = self.foward_from_emb_vec(emb_vecs)
+        return out
+
+    def foward_from_emb_vec(self, emb_vecs):
+        out = self.fc(emb_vecs)
         return out
 
     @property

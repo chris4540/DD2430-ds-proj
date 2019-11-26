@@ -8,18 +8,24 @@ import torch
 from ignite.metrics import Accuracy
 
 
-class SimilarityAccuracy(Accuracy):
+class SiameseNetSimilarityAccuracy(Accuracy):
+    """
+    Calculate the similarity of a siamese network
+
+    Example:
+        eval = create_embedding_engine(..., )
+    """
 
     def __init__(self, margin):
         super().__init__()
         self.margin = margin
 
     def update(self, output):
-        # calculate output
-        y_pred, y = output
+        # # calculate output
+        # y_pred, y = output
 
-        out1, out2 = y_pred
-        c1, c2, is_similar = y
+        # out1, out2 = y_pred
+        # c1, c2, is_similar = y
 
         # calculate L2 vector norm over the embedding dim
         dist = torch.norm((out1 - out2), p=2, dim=1)
