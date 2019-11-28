@@ -2,7 +2,6 @@
 Group 15 - Fashion Image similarity
 
 # How to run tests
--------------------
 ```bash
 $ pip install pytest pytest-timeout
 ```
@@ -85,3 +84,8 @@ $ scripts/create_deepfashion_meta.py
 
 ##### Customized Google Clould image
 1. pytorch-1-3-rapids-0-10-cu100-20181117
+
+### Reference paper and related work
+https://arxiv.org/pdf/1411.2539.pdf
+https://github.com/linxd5/VSE_Pytorch
+https://github.com/josharnoldjosh/Image-Caption-Joint-Embedding
