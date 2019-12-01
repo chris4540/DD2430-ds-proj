@@ -113,7 +113,9 @@ for _ in range(2):
 
         # compute loss
         emb_vec1, emb_vec2 = siamese_net((img1, img2))
-        contrastive_loss = con_loss_fn((emb_vec1, emb_vec2), target)
+        l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
+        l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
+        contrastive_loss = con_loss_fn((l2_emb_vec1, l2_emb_vec2), target)
 
         # clsf_loss1 = cs_loss_fn(emb_vec1, emb_vec2), targets)
         y1 = clsf_net.foward_from_emb_vec(emb_vec1)
