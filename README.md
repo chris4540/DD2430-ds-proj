@@ -30,17 +30,19 @@ $ scripts/create_deepfashion_meta.py
 ## Target for week 47
 - [x] Preprocess the deep fashion data. Did the mean and std calculation
 - [x] Implment Siamese Embedding (Siam)
+- [x] Have dataset and pairing for deep fashion dataset.
+- [x] Model candidate: resnet 18
+
+## Target for week 48
 - [x] Implment Siam + Cat (type C)
 - [x] Implment Siam + Cat in Cosine Distance (Type D)
-- [x] Have dataset and pairing for deep fashion dataset. TODO: The validation and test
 - [x] Implment on Deep fashion
-- [x] Model candidate: resnet 18
 - [x] Each epoch supervised evaluation (ANNOY, top-k)
 - [x] Balance sampling from the train dataset. Scripts to generate the metadata.csv
 
-## Target for week 48
+## Target for week 49
 - [ ] Deploy and babysit a while
-- [ ] KNN searching (ANNOY) and top-k evaluation. Out-training evalution.
+- [ ] Out-training evalution. (image search system)
 - [ ] Automatic backup experiment directory
 - [ ] Create detailed attributes for a class. Person in charge: Hassan
 - [ ] Model candidate: vgg16 (wo bn)
