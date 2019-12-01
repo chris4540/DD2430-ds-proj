@@ -2,6 +2,7 @@ import torchvision.models as models
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class ResidualEmbNetwork(nn.Module):
     """
     The embbeding network
@@ -9,7 +10,6 @@ class ResidualEmbNetwork(nn.Module):
 
     def __init__(self, depth=18):
         super().__init__()
-
 
         depth_opts = [18, 34, 50]
         if depth not in depth_opts:
@@ -41,13 +41,24 @@ class ResidualEmbNetwork(nn.Module):
 
 class ResidualNetwork(nn.Module):
 
-    def __init__(self, depth=18, nb_classes=46):
+    def __init__(self, depth=18, nb_classes=46, emb_net=None):
         super().__init__()
-        self._emb_net = ResidualEmbNetwork(depth)
+        if emb_net:
+            # copy the reference
+            self._emb_net = emb_net
+            self.depth = emb_net.depth
+        else:
+            self.depth = depth
+            self._emb_net = ResidualEmbNetwork(depth)
+
+        self.nb_classes = nb_classes
+        self._add_fully_connected_layer()
+
+    def _add_fully_connected_layer(self):
         self.fc = nn.Sequential(
             nn.Linear(self._emb_net.emb_dim, 256),
             nn.ReLU(),
-            nn.Linear(256, nb_classes))
+            nn.Linear(256, self.nb_classes))
 
     def forward(self, x):
         emb_vecs = self._emb_net(x)
