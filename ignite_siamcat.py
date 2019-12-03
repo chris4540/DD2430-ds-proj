@@ -12,6 +12,8 @@ https://github.com/pytorch/ignite/blob/master/examples/fast_neural_style/neural_
 https://pytorch.org/ignite/quickstart.html#id1
 
 https://fam-taro.hatenablog.com/entry/2018/12/25/021346
+
+https://github.com/pytorch/ignite/blob/master/examples/notebooks/VAE.ipynb
 """
 import torch
 import torch.backends.cudnn as cudnn
@@ -45,6 +47,7 @@ from torchvision.transforms import ToTensor
 from torchvision.transforms import Normalize
 from config.deep_fashion import DeepFashionConfig as cfg
 from torch.utils.data import DataLoader
+from torch.utils.data import TensorDataset
 from utils.datasets import Siamesize
 trans = Compose([Resize(cfg.sizes), ToTensor(),
                  Normalize(cfg.mean, cfg.std), ])
@@ -191,5 +194,64 @@ if __name__ == "__main__":
         clsf_acc = metrics['clsf_acc']
         print("Epoch[{}] sim_acc: {:.2f}; clsf_acc {:.2f}".format(
             engine.state.epoch, sim_acc, clsf_acc))
+
+    from igite.engine import create_supervised_evaluator
+    clsf_evaluator = create_supervised_evaluator(
+        clsf_net, device=device, metrics={
+            'accuracy': Accuracy(),
+        })
+
+
+    def run_validation(engine):
+        loader_kwargs = {
+            'pin_memory': True,
+            'num_workers': 4,
+            'batch_size': 100,
+        }
+        # train_loader = DataLoader(self.train_ds, **loader_kwargs)
+        # val_loader = DataLoader(self.val_ds, **loader_kwargs)
+
+        # ----------------------------------
+        train_embs, train_labels = extract_embeddings(emb_net, train_loader)
+        val_embs, val_labels = extract_embeddings(emb_net, val_loader)
+
+        val_emb_ds = TensorDataset(val_embs, val_labels)
+        clsf_evaluator.run(DataLoader(val_emb_ds, *loader_kwargs))
+
+        # ----------------------------------------------------------------------
+
+        # emb_dim = train_embs.shape[1]
+        # # ----------------------------------
+        # t = AnnoyIndex(emb_dim, metric='euclidean')
+        # n_trees = 100
+        # for i, emb_vec in enumerate(train_embs):
+        #     t.add_item(i, emb_vec)
+        # # build a forest of trees
+        # tqdm.write("Building ANN forest...")
+        # t.build(n_trees)
+        # # ----------------------------------
+        # top_k_corrects = dict()
+        # # Meassure Prec@[5, 10, 20, 30]
+        # for i, emb_vec in enumerate(val_embs):
+        #     correct_cls = val_labels[i]
+        #     for k in [5, 10, 20, 30]:
+        #         idx = t.get_nns_by_vector(emb_vec, k)
+        #         top_k_classes = train_labels[idx]
+        #         correct = np.sum(top_k_classes == correct_cls)
+        #         accum_corr = top_k_corrects.get(k, 0)
+        #         top_k_corrects[k] = accum_corr + correct
+        # # -------------------------------------------------
+        # # calculate back the acc
+        # top_k_acc = dict()
+        # for k in [5, 10, 20, 30]:
+        #     top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
+
+        # tqdm.write(
+        #     "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
+        #     .format(engine.state.epoch)
+        # )
+
+        # for k in [5, 10, 20, 30]:
+        #     tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
 
     engine.run(s_train_loader, max_epochs=1)
