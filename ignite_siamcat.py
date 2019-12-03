@@ -201,7 +201,7 @@ if __name__ == "__main__":
             'accuracy': Accuracy(),
         })
 
-
+    @engine.on(Events.EPOCH_COMPLETED)
     def run_validation(engine):
         loader_kwargs = {
             'pin_memory': True,
