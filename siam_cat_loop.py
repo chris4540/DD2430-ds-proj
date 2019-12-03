@@ -50,6 +50,8 @@ trans = Compose([Resize(cfg.sizes), ToTensor(),
 # dataset
 train_ds = DeepFashionDataset(
     cfg.root_dir, 'train', transform=trans)
+val_ds = DeepFashionDataset(
+    cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 # loader
 loader_kwargs = {
@@ -58,6 +60,8 @@ loader_kwargs = {
     'num_workers': 4,
 }
 s_train_loader = DataLoader(siamese_train_ds, **loader_kwargs)
+train_loader = DataLoader(val_ds, **loader_kwargs)
+val_loader = DataLoader(val_ds, **loader_kwargs)
 
 # Optim
 import torch.optim as optim
@@ -99,7 +103,7 @@ cs_loss_fn = CrossEntropyLoss()
 
 clsf_net.to(device)
 
-for _ in range(2):
+for _ in range(1):
     for inputs, targets in s_train_loader:
 
         img1, img2 = inputs
@@ -123,13 +127,16 @@ for _ in range(2):
 
         # back-prop
         loss = contrastive_loss + clsf_loss1 + clsf_loss2
+        # print(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         # loss = loss.float()
-        with torch.no_grad():
-            print("Loss: ", loss.float())
-            print("contrastive_loss: ", contrastive_loss.float())
-            print("clsf_loss1: ", clsf_loss1.float())
-            print("clsf_loss2: ", clsf_loss2.float())
+        # with torch.no_grad():
+        #     print("Loss: ", loss.float())
+        #     print("contrastive_loss: ", contrastive_loss.float())
+        #     print("clsf_loss1: ", clsf_loss1.float())
+        #     print("clsf_loss2: ", clsf_loss2.float())
+
+    # evaluation

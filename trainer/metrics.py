@@ -21,11 +21,11 @@ class SiameseNetSimilarityAccuracy(Accuracy):
         self.margin = margin
 
     def update(self, output):
-        # # calculate output
-        # y_pred, y = output
+        # calculate output
+        y_pred, y = output
 
-        # out1, out2 = y_pred
-        # c1, c2, is_similar = y
+        out1, out2 = y_pred
+        _, _, is_similar = y
 
         # calculate L2 vector norm over the embedding dim
         dist = torch.norm((out1 - out2), p=2, dim=1)
@@ -35,5 +35,3 @@ class SiameseNetSimilarityAccuracy(Accuracy):
         # dist_sq < margin**2 => similar => 1
         pred = (dist_sq < self.margin**2).int()
         super().update((pred, is_similar))
-
-
