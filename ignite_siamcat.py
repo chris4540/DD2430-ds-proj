@@ -195,10 +195,11 @@ if __name__ == "__main__":
         print("Epoch[{}] sim_acc: {:.2f}; clsf_acc {:.2f}".format(
             engine.state.epoch, sim_acc, clsf_acc))
 
-    from igite.engine import create_supervised_evaluator
+    from ignite.engine import create_supervised_evaluator
     clsf_evaluator = create_supervised_evaluator(
         clsf_net, device=device, metrics={
             'accuracy': Accuracy(),
+            'loss': Loss(CrossEntropyLoss())
         })
 
     @engine.on(Events.EPOCH_COMPLETED)
@@ -217,6 +218,10 @@ if __name__ == "__main__":
 
         val_emb_ds = TensorDataset(val_embs, val_labels)
         clsf_evaluator.run(DataLoader(val_emb_ds, *loader_kwargs))
+        metrics = evaluator.state.metrics
+        avg_accuracy = metrics['accuracy']
+        avg_loss = metrics['loss']
+        print("run_validation: accuracy: {}, loss: {}".format(avg_accuracy, avg_loss))
 
         # ----------------------------------------------------------------------
 
