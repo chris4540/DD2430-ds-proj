@@ -81,11 +81,12 @@ cs_loss_fn = CrossEntropyLoss()
 
 # Acc
 import torch
-# from ignite.metrics import Accuracy
-from ignite import metrics
+from ignite.metrics import Accuracy
+# from ignite import metrics
 
 
-class SiameseNetSimilarityAccuracy(metrics.Accuracy):
+# class SiameseNetSimilarityAccuracy(metrics.Accuracy):
+class SiameseNetSimilarityAccuracy(Accuracy):
     """
     Calculate the similarity of a siamese network
 
@@ -114,14 +115,14 @@ class SiameseNetSimilarityAccuracy(metrics.Accuracy):
         super().update((pred, is_similar))
 
 
-class Accuracy(metrics.Accuracy):
+# class Accuracy(metrics.Accuracy):
 
-    @torch.no_grad()
-    def update(self, output):
-        # y_pred, y = output
-        y_pred = output["cls_pred"]
-        y_true = output["cls_true"]
-        super().update((y_pred, y_true))
+#     @torch.no_grad()
+#     def update(self, output):
+#         # y_pred, y = output
+#         y_pred = output["cls_pred"]
+#         y_true = output["cls_true"]
+#         super().update((y_pred, y_true))
 
 
 clsf_net.to(device)
@@ -166,7 +167,8 @@ if __name__ == "__main__":
     engine = Engine(_update)
     metrics = {
         "sim_acc": SiameseNetSimilarityAccuracy(margin=1),
-        "clsf_acc": Accuracy()
+        "clsf_acc": Accuracy(
+            output_transform=lambda x: (x['cls_pred'], x['cls_true']))
     }
 
     for name, metric in metrics.items():
