@@ -78,7 +78,7 @@ val_loader = DataLoader(val_ds, **loader_kwargs)
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 params = [*siamese_net.parameters(), *clsf_net.parameters()]
-optimizer = optim.Adam(params, lr=1e-4)
+optimizer = optim.Adam(params, lr=5e-4)
 scheduler = CosineAnnealingLR(
     optimizer, T_max=len(train_ds) * 2 / batch_size, eta_min=1e-6)
 # Loss functions
@@ -89,10 +89,10 @@ from torch.nn import CrossEntropyLoss
 from trainer.loss import ContrastiveLoss
 
 import numpy as np
-margin = np.sqrt(10)
-con_loss_fn = ContrastiveLoss(margin=margin)
+margin = np.sqrt(1000)
+con_loss_fn = ContrastiveLoss(margin=margin, average=True)
 cs_loss_fn = CrossEntropyLoss()
-
+scale_factor = 0.5 * margin**2  # consider per batch, negative pair ~ m**2 / 2
 # Acc
 import torch
 from ignite.metrics import Accuracy
@@ -157,7 +157,7 @@ def _update(engine, batch):
     clsf_loss1 = cs_loss_fn(y1, c1)
     clsf_loss2 = cs_loss_fn(y2, c2)
 
-    loss = contras_loss + (clsf_loss1 + clsf_loss2) * 20
+    loss = contras_loss + (clsf_loss1 + clsf_loss2) * scale_factor
     loss.backward()
     optimizer.step()
 
