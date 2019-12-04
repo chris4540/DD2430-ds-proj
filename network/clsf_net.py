@@ -14,9 +14,9 @@ class ClassificationNet(nn.Module):
 
     def _add_fully_connected_layer(self):
         self.fc = nn.Sequential(
-            nn.Linear(self.emb_dim, 256),
+            nn.Linear(self.emb_dim, 512),
             nn.ReLU(),
-            nn.Linear(256, self.nb_classes))
+            nn.Linear(512, self.nb_classes))
 
     def forward(self, emb_vecs):
         out = self.fc(emb_vecs)
