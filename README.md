@@ -81,6 +81,9 @@ $ scripts/create_deepfashion_meta.py
   ```bash
   conda install -c powerai multicoretsne
   ```
+5. Using tensorboard 
+  https://qiita.com/ciela/items/ae1737bf6cb357cda900
+  https://link.medium.com/pUAef4rK91
 
 ##### Getting Similar Images
 1. Using indexing from *ANNOY* library results is fastest nearest neighbour retreival.
