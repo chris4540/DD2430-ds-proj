@@ -59,9 +59,9 @@ val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 siamese_val_ds = Siamesize(val_ds)
-# if True:
-#     train_ds = Subset(train_ds, range(300))
-#     siamese_train_ds = Subset(siamese_train_ds, range(300))
+if True:  # For overfitting test
+    train_ds = Subset(train_ds, range(5000))
+    siamese_train_ds = Subset(siamese_train_ds, range(5000))
 # loader
 import os
 batch_size = 128
@@ -182,7 +182,7 @@ def _update(engine, batch):
 if __name__ == "__main__":
     engine = Engine(_update)
     metrics = {
-        "sim_acc": SiameseNetSimilarityAccuracy(margin=1),
+        "sim_acc": SiameseNetSimilarityAccuracy(margin=margin),
         "clsf_acc": Accuracy(
             output_transform=lambda x: (x['cls_pred'], x['cls_true']))
     }

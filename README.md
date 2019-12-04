@@ -41,7 +41,8 @@ $ scripts/create_deepfashion_meta.py
 - [x] Balance sampling from the train dataset. Scripts to generate the metadata.csv
 
 ## Target for week 49
-- [ ] Deploy and babysit a while
+- [x] Hyper-parameter tuning + over fitting with small dataset
+- [x] Deploy and babysit a while
 - [ ] Out-training evalution. (image search system)
 - [ ] Automatic backup experiment directory
 - [ ] Create detailed attributes for a class. Person in charge: Hassan
