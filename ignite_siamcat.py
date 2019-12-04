@@ -196,6 +196,8 @@ if __name__ == "__main__":
             engine.state.epoch, sim_acc, clsf_acc))
 
     from ignite.engine import create_supervised_evaluator
+    from ignite.metrics import Loss
+    from utils import extract_embeddings
     clsf_evaluator = create_supervised_evaluator(
         clsf_net, device=device, metrics={
             'accuracy': Accuracy(),
