@@ -22,7 +22,8 @@ import torch.backends.cudnn as cudnn
 from ignite.engine import _prepare_batch
 from ignite.engine.engine import Engine
 
-max_epochs = 5
+max_epochs = 10
+pin_memory = True
 
 # GPU
 if torch.cuda.is_available():
@@ -61,7 +62,7 @@ val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 siamese_val_ds = Siamesize(val_ds)
-if True:  # For overfitting test
+if False:  # For overfitting test
     train_ds = Subset(train_ds, range(3000))
     val_ds = Subset(val_ds, range(1000))
     siamese_train_ds = Subset(siamese_train_ds, range(3000))
@@ -70,7 +71,7 @@ if True:  # For overfitting test
 import os
 batch_size = 128
 loader_kwargs = {
-    'pin_memory': True,
+    'pin_memory': pin_memory,
     'batch_size': batch_size,
     'num_workers': os.cpu_count()
 }
@@ -152,7 +153,7 @@ def _update(engine, batch):
     siamese_net.train()
     clsf_net.train()
     optimizer.zero_grad()
-    x, targets = _prepare_batch(batch, device=device)
+    x, targets = _prepare_batch(batch, device=device, non_blocking=pin_memory)
     c1, c2, _ = targets
 
     emb_vec1, emb_vec2 = siamese_net(x)
@@ -226,14 +227,14 @@ if __name__ == "__main__":
     from utils import extract_embeddings
     from trainer.metrics import SiameseNetSimilarityAccuracy as SimilarityAccuracy
     siamese_evaluator = create_supervised_evaluator(
-        siamese_net, device=device, metrics={
+        siamese_net, device=device, non_blocking=pin_memory, metrics={
             'accuracy': SimilarityAccuracy(margin),
             'loss': Loss(con_loss_fn)
         })
     pbar = ProgressBar()
     pbar.attach(siamese_evaluator)
     clsf_evaluator = create_supervised_evaluator(
-        clsf_net, device=device, metrics={
+        clsf_net, device=device, non_blocking=pin_memory, metrics={
             'accuracy': Accuracy(),
             'loss': Loss(CrossEntropyLoss())
         })
@@ -261,8 +262,8 @@ if __name__ == "__main__":
         avg_loss = metrics['loss']
         print("run_validation: clsf accuracy: {}, loss: {}".format(
             avg_accuracy, avg_loss))
-        # if engine.state.epoch % 2 != 0:
-        #     return
+        if engine.state.epoch % 5 != 0:
+            return
         # ----------------------------------------------------------------------
         train_loader = DataLoader(train_ds, **loader_kwargs)
         train_embs, train_labels = extract_embeddings(emb_net, train_loader)
