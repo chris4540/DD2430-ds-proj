@@ -22,7 +22,7 @@ import torch.backends.cudnn as cudnn
 from ignite.engine import _prepare_batch
 from ignite.engine.engine import Engine
 
-max_epochs = 3
+max_epochs = 5
 
 # GPU
 if torch.cuda.is_available():
@@ -61,7 +61,7 @@ val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 siamese_val_ds = Siamesize(val_ds)
-if False:  # For overfitting test
+if True:  # For overfitting test
     train_ds = Subset(train_ds, range(3000))
     val_ds = Subset(val_ds, range(1000))
     siamese_train_ds = Subset(siamese_train_ds, range(3000))
@@ -264,13 +264,8 @@ if __name__ == "__main__":
         # if engine.state.epoch % 2 != 0:
         #     return
         # ----------------------------------------------------------------------
-        sub_train_ds = Subset(train_ds, np.random.choice(
-            len(train_ds), 1000, replace=False))
-        train_loader = DataLoader(sub_train_ds, **loader_kwargs)
+        train_loader = DataLoader(train_ds, **loader_kwargs)
         train_embs, train_labels = extract_embeddings(emb_net, train_loader)
-
-        sub_val_emb_ds = Subset(val_emb_ds, np.random.choice(
-            len(val_emb_ds), 100, replace=False))
 
         emb_dim = train_embs.shape[1]
         # ----------------------------------
@@ -287,18 +282,19 @@ if __name__ == "__main__":
         # ----------------------------------
         top_k_corrects = dict()
         # Meassure Prec@[5, 10, 20, 30]
-        for i, (emb_vec, correct_cls) in enumerate(sub_val_emb_ds):
-            # correct_cls = val_labels[i]
-            for k in [5, 10, 20, 30]:
+        k_vals = [10, 30, 50, 100, 500, 1000]
+        for i, emb_vec in enumerate(val_embs):
+            correct_cls = val_labels[i]
+            for k in k_vals:
                 idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
                 top_k_classes = train_labels[idx]
                 correct = torch.sum(top_k_classes == correct_cls)
                 accum_corr = top_k_corrects.get(k, 0)
-                top_k_corrects[k] = accum_corr + correct
+                top_k_corrects[k] = accum_corr + correct.item()
         # -------------------------------------------------
         # calculate back the acc
         top_k_acc = dict()
-        for k in [5, 10, 20, 30]:
+        for k in k_vals:
             top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
 
         tqdm.write(
@@ -306,7 +302,8 @@ if __name__ == "__main__":
             .format(engine.state.epoch)
         )
 
-        for k in [5, 10, 20, 30]:
-            tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
+        for k in k_vals:
+            tqdm.write("  Prec@{} = {:.2f}, Corrects@{} = {}".format(
+                k, top_k_acc[k], k, top_k_corrects[k]))
 
-    engine.run(s_train_loader, max_epochs=10)
+    engine.run(s_train_loader, max_epochs=max_epochs)
