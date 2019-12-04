@@ -15,12 +15,14 @@ https://fam-taro.hatenablog.com/entry/2018/12/25/021346
 
 https://github.com/pytorch/ignite/blob/master/examples/notebooks/VAE.ipynb
 """
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 # ---------
 from ignite.engine import _prepare_batch
 from ignite.engine.engine import Engine
 
+max_epochs = 3
 
 # GPU
 if torch.cuda.is_available():
@@ -59,9 +61,11 @@ val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 siamese_val_ds = Siamesize(val_ds)
-if True:  # For overfitting test
-    train_ds = Subset(train_ds, range(5000))
-    siamese_train_ds = Subset(siamese_train_ds, range(5000))
+if False:  # For overfitting test
+    train_ds = Subset(train_ds, range(3000))
+    val_ds = Subset(val_ds, range(1000))
+    siamese_train_ds = Subset(siamese_train_ds, range(3000))
+    siamese_val_ds = Subset(siamese_val_ds, range(1000))
 # loader
 import os
 batch_size = 128
@@ -71,16 +75,16 @@ loader_kwargs = {
     'num_workers': os.cpu_count()
 }
 s_train_loader = DataLoader(siamese_train_ds, **loader_kwargs, shuffle=True)
-train_loader = DataLoader(val_ds, **loader_kwargs)
+# train_loader = DataLoader(val_ds, **loader_kwargs)
 val_loader = DataLoader(val_ds, **loader_kwargs)
 
 # Optim
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 params = [*siamese_net.parameters(), *clsf_net.parameters()]
-optimizer = optim.Adam(params, lr=5e-4)
+optimizer = optim.Adam(params, lr=5e-4, weight_decay=1e-5)
 scheduler = CosineAnnealingLR(
-    optimizer, T_max=len(train_ds) * 2 / batch_size, eta_min=1e-6)
+    optimizer, T_max=len(train_ds) * max_epochs / batch_size, eta_min=1e-6)
 # Loss functions
 import torch.nn as nn
 import torch.nn.functional as F
@@ -89,7 +93,8 @@ from torch.nn import CrossEntropyLoss
 from trainer.loss import ContrastiveLoss
 
 import numpy as np
-margin = np.sqrt(1000)
+# margin = np.sqrt(1000)
+margin = np.sqrt(10)
 con_loss_fn = ContrastiveLoss(margin=margin, average=True)
 cs_loss_fn = CrossEntropyLoss()
 scale_factor = 0.5 * margin**2  # consider per batch, negative pair ~ m**2 / 2
@@ -233,68 +238,75 @@ if __name__ == "__main__":
             'loss': Loss(CrossEntropyLoss())
         })
 
-    # @engine.on(Events.EPOCH_COMPLETED)
-    # def run_validation(engine):
-    #     # loader_kwargs = {
-    #     #     'pin_memory': True,
-    #     #     'num_workers': 4,
-    #     #     'batch_size': 100,
-    #     # }
-    #     # train_loader = DataLoader(train_ds, **loader_kwargs)
-    #     siamese_val_loader = DataLoader(siamese_val_ds, **loader_kwargs)
+    @engine.on(Events.EPOCH_COMPLETED)
+    def run_validation(engine):
+        # loader_kwargs = {
+        #     'pin_memory': True,
+        #     'num_workers': 4,
+        #     'batch_size': 100,
+        # }
+        siamese_val_loader = DataLoader(siamese_val_ds, **loader_kwargs)
 
-    #     # ----------------------------------
-    #     siamese_evaluator.run(siamese_val_loader)
-    #     avg_acc = siamese_evaluator.state.metrics['accuracy']
-    #     print("run_validation: SimilarityAccuracy accuracy: {}".format(
-    #         avg_acc))
-    #     # train_embs, train_labels = extract_embeddings(emb_net, train_loader)
-    #     val_embs, val_labels = extract_embeddings(emb_net, val_loader)
+        # ----------------------------------
+        siamese_evaluator.run(siamese_val_loader)
+        avg_acc = siamese_evaluator.state.metrics['accuracy']
+        print("run_validation: SimilarityAccuracy accuracy: {}".format(
+            avg_acc))
+        val_embs, val_labels = extract_embeddings(emb_net, val_loader)
 
-    #     val_emb_ds = TensorDataset(val_embs, val_labels)
-    #     clsf_evaluator.run(DataLoader(val_emb_ds, **loader_kwargs))
-    #     metrics = clsf_evaluator.state.metrics
-    #     avg_accuracy = metrics['accuracy']
-    #     avg_loss = metrics['loss']
-    #     print("run_validation: clsf accuracy: {}, loss: {}".format(
-    #         avg_accuracy, avg_loss))
+        val_emb_ds = TensorDataset(val_embs, val_labels)
+        clsf_evaluator.run(DataLoader(val_emb_ds, **loader_kwargs))
+        metrics = clsf_evaluator.state.metrics
+        avg_accuracy = metrics['accuracy']
+        avg_loss = metrics['loss']
+        print("run_validation: clsf accuracy: {}, loss: {}".format(
+            avg_accuracy, avg_loss))
+        # if engine.state.epoch % 2 != 0:
+        #     return
+        # ----------------------------------------------------------------------
+        sub_train_ds = Subset(train_ds, np.random.choice(
+            len(train_ds), 1000, replace=False))
+        train_loader = DataLoader(sub_train_ds, **loader_kwargs)
+        train_embs, train_labels = extract_embeddings(emb_net, train_loader)
 
-    # # ----------------------------------------------------------------------
-    # emb_dim = train_embs.shape[1]
-    # # ----------------------------------
-    # from annoy import AnnoyIndex
-    # from tqdm import tqdm
-    # import numpy as np
-    # t = AnnoyIndex(emb_dim, metric='euclidean')
-    # n_trees = 100
-    # for i, emb_vec in enumerate(train_embs):
-    #     t.add_item(i, emb_vec.cpu().numpy())
-    # # build a forest of trees
-    # tqdm.write("Building ANN forest...")
-    # t.build(n_trees)
-    # # ----------------------------------
-    # top_k_corrects = dict()
-    # # Meassure Prec@[5, 10, 20, 30]
-    # for i, emb_vec in enumerate(val_embs):
-    #     correct_cls = val_labels[i]
-    #     for k in [5, 10, 20, 30]:
-    #         idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
-    #         top_k_classes = train_labels[idx]
-    #         correct = torch.sum(top_k_classes == correct_cls)
-    #         accum_corr = top_k_corrects.get(k, 0)
-    #         top_k_corrects[k] = accum_corr + correct
-    # # -------------------------------------------------
-    # # calculate back the acc
-    # top_k_acc = dict()
-    # for k in [5, 10, 20, 30]:
-    #     top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
+        sub_val_emb_ds = Subset(val_emb_ds, np.random.choice(
+            len(val_emb_ds), 100, replace=False))
 
-    # tqdm.write(
-    #     "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
-    #     .format(engine.state.epoch)
-    # )
+        emb_dim = train_embs.shape[1]
+        # ----------------------------------
+        from annoy import AnnoyIndex
+        from tqdm import tqdm
 
-    # for k in [5, 10, 20, 30]:
-    #     tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
+        t = AnnoyIndex(emb_dim, metric='euclidean')
+        n_trees = 100
+        for i, emb_vec in enumerate(train_embs):
+            t.add_item(i, emb_vec.cpu().numpy())
+        # build a forest of trees
+        tqdm.write("Building ANN forest...")
+        t.build(n_trees)
+        # ----------------------------------
+        top_k_corrects = dict()
+        # Meassure Prec@[5, 10, 20, 30]
+        for i, (emb_vec, correct_cls) in enumerate(sub_val_emb_ds):
+            # correct_cls = val_labels[i]
+            for k in [5, 10, 20, 30]:
+                idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
+                top_k_classes = train_labels[idx]
+                correct = torch.sum(top_k_classes == correct_cls)
+                accum_corr = top_k_corrects.get(k, 0)
+                top_k_corrects[k] = accum_corr + correct
+        # -------------------------------------------------
+        # calculate back the acc
+        top_k_acc = dict()
+        for k in [5, 10, 20, 30]:
+            top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
+
+        tqdm.write(
+            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
+            .format(engine.state.epoch)
+        )
+
+        for k in [5, 10, 20, 30]:
+            tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
 
     engine.run(s_train_loader, max_epochs=10)
