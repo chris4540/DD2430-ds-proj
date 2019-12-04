@@ -58,6 +58,7 @@ train_ds = DeepFashionDataset(
 val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
+siamese_val_ds = Siamesize(val_ds)
 # if True:
 #     train_ds = Subset(train_ds, range(300))
 #     siamese_train_ds = Subset(siamese_train_ds, range(300))
@@ -66,7 +67,7 @@ import os
 loader_kwargs = {
     'pin_memory': True,
     'batch_size': 100,
-    'num_workers': os.cpu_count() * 4,
+    'num_workers': os.cpu_count()
 }
 s_train_loader = DataLoader(siamese_train_ds, **loader_kwargs)
 train_loader = DataLoader(val_ds, **loader_kwargs)
@@ -76,9 +77,9 @@ val_loader = DataLoader(val_ds, **loader_kwargs)
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 params = [*siamese_net.parameters(), *clsf_net.parameters()]
-optimizer = optim.Adam(params, lr=1e-3)
+optimizer = optim.Adam(params, lr=5e-4)
 scheduler = CosineAnnealingLR(
-    optimizer, T_max=len(train_ds) / 100, eta_min=1e-5)
+    optimizer, T_max=len(train_ds) * 2 / 100, eta_min=1e-6)
 # Loss functions
 import torch.nn as nn
 import torch.nn.functional as F
@@ -154,7 +155,7 @@ def _update(engine, batch):
     clsf_loss1 = cs_loss_fn(y1, c1)
     clsf_loss2 = cs_loss_fn(y2, c2)
 
-    loss = contras_loss + clsf_loss1 + clsf_loss2
+    loss = contras_loss + 10 * clsf_loss1 + 10 * clsf_loss2
     loss.backward()
     optimizer.step()
 
@@ -211,6 +212,13 @@ if __name__ == "__main__":
     from ignite.engine import create_supervised_evaluator
     from ignite.metrics import Loss
     from utils import extract_embeddings
+    from trainer.metrics import SiameseNetSimilarityAccuracy as SimilarityAccuracy
+    siamese_evaluator = create_supervised_evaluator(
+        siamese_net, device=device, metrics={
+            'accuracy': SimilarityAccuracy(1),
+        })
+    pbar = ProgressBar()
+    pbar.attach(siamese_evaluator)
     clsf_evaluator = create_supervised_evaluator(
         clsf_net, device=device, metrics={
             'accuracy': Accuracy(),
@@ -224,11 +232,15 @@ if __name__ == "__main__":
         #     'num_workers': 4,
         #     'batch_size': 100,
         # }
-        train_loader = DataLoader(train_ds, **loader_kwargs)
-        val_loader = DataLoader(val_ds, **loader_kwargs)
+        # train_loader = DataLoader(train_ds, **loader_kwargs)
+        siamese_val_loader = DataLoader(siamese_val_ds, **loader_kwargs)
 
         # ----------------------------------
-        train_embs, train_labels = extract_embeddings(emb_net, train_loader)
+        siamese_evaluator.run(siamese_val_loader)
+        avg_acc = siamese_evaluator.state.metrics['accuracy']
+        print("run_validation: SimilarityAccuracy accuracy: {}".format(
+            avg_acc))
+        # train_embs, train_labels = extract_embeddings(emb_net, train_loader)
         val_embs, val_labels = extract_embeddings(emb_net, val_loader)
 
         val_emb_ds = TensorDataset(val_embs, val_labels)
@@ -236,17 +248,19 @@ if __name__ == "__main__":
         metrics = clsf_evaluator.state.metrics
         avg_accuracy = metrics['accuracy']
         avg_loss = metrics['loss']
-        print("run_validation: accuracy: {}, loss: {}".format(
+        print("run_validation: clsf accuracy: {}, loss: {}".format(
             avg_accuracy, avg_loss))
 
-        # ----------------------------------------------------------------------
-
+        # # ----------------------------------------------------------------------
         # emb_dim = train_embs.shape[1]
         # # ----------------------------------
+        # from annoy import AnnoyIndex
+        # from tqdm import tqdm
+        # import numpy as np
         # t = AnnoyIndex(emb_dim, metric='euclidean')
         # n_trees = 100
         # for i, emb_vec in enumerate(train_embs):
-        #     t.add_item(i, emb_vec)
+        #     t.add_item(i, emb_vec.cpu().numpy())
         # # build a forest of trees
         # tqdm.write("Building ANN forest...")
         # t.build(n_trees)
@@ -256,9 +270,9 @@ if __name__ == "__main__":
         # for i, emb_vec in enumerate(val_embs):
         #     correct_cls = val_labels[i]
         #     for k in [5, 10, 20, 30]:
-        #         idx = t.get_nns_by_vector(emb_vec, k)
+        #         idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
         #         top_k_classes = train_labels[idx]
-        #         correct = np.sum(top_k_classes == correct_cls)
+        #         correct = torch.sum(top_k_classes == correct_cls)
         #         accum_corr = top_k_corrects.get(k, 0)
         #         top_k_corrects[k] = accum_corr + correct
         # # -------------------------------------------------
@@ -275,4 +289,4 @@ if __name__ == "__main__":
         # for k in [5, 10, 20, 30]:
         #     tqdm.write("  Prec@{} = {:.2f}".format(k, top_k_acc[k]))
 
-    engine.run(s_train_loader, max_epochs=1)
+    engine.run(s_train_loader, max_epochs=10)
