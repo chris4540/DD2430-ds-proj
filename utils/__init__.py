@@ -38,15 +38,22 @@ def extract_embeddings(model, dataloader):
     TODO:
     model should have attr emb_net and use it
     """
+    if hasattr(model, 'emb_net'):
+        emb_net = model.emb_net
+    else:
+        emb_net = model
 
     emb_list = []
     label_list = []
     for imgs, lbls in tqdm(dataloader, desc='Extract emb vecs'):
-        emb_list.append(map_imgs_to_embs(model.emb_net, imgs).numpy())
-        label_list.append(lbls.numpy())
+        # extract embedding vector
+        emb_vecs = map_imgs_to_embs(model, imgs)
+        # save the value to a list
+        emb_list.append(emb_vecs)
+        label_list.append(lbls)
 
-    embeddings = np.concatenate(emb_list, axis=0)
-    labels = np.concatenate(label_list)
+    embeddings = torch.cat(emb_list, dim=0)
+    labels = torch.cat(label_list, dim=0)
 
     return embeddings, labels
 

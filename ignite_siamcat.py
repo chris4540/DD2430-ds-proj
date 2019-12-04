@@ -47,6 +47,7 @@ from torchvision.transforms import ToTensor
 from torchvision.transforms import Normalize
 from config.deep_fashion import DeepFashionConfig as cfg
 from torch.utils.data import DataLoader
+from torch.utils.data import Subset
 from torch.utils.data import TensorDataset
 from utils.datasets import Siamesize
 trans = Compose([Resize(cfg.sizes), ToTensor(),
@@ -57,11 +58,15 @@ train_ds = DeepFashionDataset(
 val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
+# if True:
+#     train_ds = Subset(train_ds, range(300))
+#     siamese_train_ds = Subset(siamese_train_ds, range(300))
 # loader
+import os
 loader_kwargs = {
     'pin_memory': True,
     'batch_size': 100,
-    'num_workers': 4,
+    'num_workers': os.cpu_count() * 4,
 }
 s_train_loader = DataLoader(siamese_train_ds, **loader_kwargs)
 train_loader = DataLoader(val_ds, **loader_kwargs)
@@ -69,8 +74,11 @@ val_loader = DataLoader(val_ds, **loader_kwargs)
 
 # Optim
 import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
 params = [*siamese_net.parameters(), *clsf_net.parameters()]
 optimizer = optim.Adam(params, lr=1e-3)
+scheduler = CosineAnnealingLR(
+    optimizer, T_max=len(train_ds) / 100, eta_min=1e-5)
 # Loss functions
 import torch.nn as nn
 import torch.nn.functional as F
@@ -187,6 +195,11 @@ if __name__ == "__main__":
     #     print("Epoch[{}] Loss: {:.2f}".format(
     #         engine.state.epoch, engine.state.output["loss"]))
 
+    @engine.on(Events.ITERATION_COMPLETED)
+    def take_scheduler_step(engine):
+        scheduler.step()
+        # print(scheduler.get_lr())
+
     @engine.on(Events.EPOCH_COMPLETED)
     def log_training_acc(engine):
         metrics = engine.state.metrics
@@ -206,24 +219,25 @@ if __name__ == "__main__":
 
     @engine.on(Events.EPOCH_COMPLETED)
     def run_validation(engine):
-        loader_kwargs = {
-            'pin_memory': True,
-            'num_workers': 4,
-            'batch_size': 100,
-        }
-        # train_loader = DataLoader(self.train_ds, **loader_kwargs)
-        # val_loader = DataLoader(self.val_ds, **loader_kwargs)
+        # loader_kwargs = {
+        #     'pin_memory': True,
+        #     'num_workers': 4,
+        #     'batch_size': 100,
+        # }
+        train_loader = DataLoader(train_ds, **loader_kwargs)
+        val_loader = DataLoader(val_ds, **loader_kwargs)
 
         # ----------------------------------
         train_embs, train_labels = extract_embeddings(emb_net, train_loader)
         val_embs, val_labels = extract_embeddings(emb_net, val_loader)
 
         val_emb_ds = TensorDataset(val_embs, val_labels)
-        clsf_evaluator.run(DataLoader(val_emb_ds, *loader_kwargs))
-        metrics = evaluator.state.metrics
+        clsf_evaluator.run(DataLoader(val_emb_ds, **loader_kwargs))
+        metrics = clsf_evaluator.state.metrics
         avg_accuracy = metrics['accuracy']
         avg_loss = metrics['loss']
-        print("run_validation: accuracy: {}, loss: {}".format(avg_accuracy, avg_loss))
+        print("run_validation: accuracy: {}, loss: {}".format(
+            avg_accuracy, avg_loss))
 
         # ----------------------------------------------------------------------
 
