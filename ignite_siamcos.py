@@ -109,7 +109,6 @@ from ignite.metrics import Accuracy
 # from ignite import metrics
 
 
-# class SiameseNetSimilarityAccuracy(metrics.Accuracy):
 class SiameseNetSimilarityAccuracy(Accuracy):
     """
     Calculate the similarity of a siamese network
@@ -118,14 +117,19 @@ class SiameseNetSimilarityAccuracy(Accuracy):
         eval = create_embedding_engine(..., )
     """
 
-    def __init__(self, margin):
+    def __init__(self, margin, l2_normalize=False):
         super().__init__()
         self.margin = margin
+        self.l2_normalize = l2_normalize
 
     @torch.no_grad()
     def update(self, output):
         # calculate output
         out1, out2 = output["emb_vecs"]
+
+        if self.l2_normalize:
+            out1 = F.normalize(out1, p=2, dim=1)
+            out2 = F.normalize(out2, p=2, dim=1)
 
         _, _, is_similar = output["targets"]
 
@@ -196,7 +200,7 @@ def _update(engine, batch):
 if __name__ == "__main__":
     engine = Engine(_update)
     metrics = {
-        "sim_acc": SiameseNetSimilarityAccuracy(margin=margin),
+        "sim_acc": SiameseNetSimilarityAccuracy(margin=margin, l2_normalize=True),
         "clsf_acc": Accuracy(
             output_transform=lambda x: (x['cls_pred'], x['cls_true']))
     }
@@ -236,7 +240,8 @@ if __name__ == "__main__":
     from trainer.metrics import SiameseNetSimilarityAccuracy as SimilarityAccuracy
     siamese_evaluator = create_supervised_evaluator(
         siamese_net, device=device, non_blocking=pin_memory, metrics={
-            'accuracy': SimilarityAccuracy(margin),
+            # no a good approach
+            'accuracy': SimilarityAccuracy(margin, l2_normalize=True),
             'loss': Loss(con_loss_fn)
         })
     pbar = ProgressBar()
@@ -276,7 +281,6 @@ if __name__ == "__main__":
         # ----------------------------------------------------------------------
         # train_loader = DataLoader(train_ds, **loader_kwargs)
         # train_embs, train_labels = extract_embeddings(emb_net, train_loader)
-
         # emb_dim = train_embs.shape[1]
         # ----------------------------------
         # from annoy import AnnoyIndex
