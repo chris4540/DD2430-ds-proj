@@ -1,0 +1,59 @@
+chrislin@tch13-test-p4:~/ds-proj$ python ignite_siamcat.py
+Epoch[1] sim_acc: 0.66; clsf_acc 0.29
+run_validation: SimilarityAccuracy accuracy: 0.7141758769822201
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.67it/s]
+run_validation: clsf accuracy: 0.46785199423354157, loss: 1.5608562130128347
+Epoch[2] sim_acc: 0.75; clsf_acc 0.56
+run_validation: SimilarityAccuracy accuracy: 0.7317635752042287
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.69it/s]
+run_validation: clsf accuracy: 0.5648246035559827, loss: 1.3709275960120257
+Epoch[3] sim_acc: 0.79; clsf_acc 0.68
+run_validation: SimilarityAccuracy accuracy: 0.7332051898125901
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.76it/s]
+run_validation: clsf accuracy: 0.5503123498318117, loss: 1.5116772863854588
+Epoch[4] sim_acc: 0.84; clsf_acc 0.79
+run_validation: SimilarityAccuracy accuracy: 0.7293608841902931
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.77it/s]
+run_validation: clsf accuracy: 0.5704949543488708, loss: 1.6134547612347436
+Epoch[5] sim_acc: 0.89; clsf_acc 0.89
+run_validation: SimilarityAccuracy accuracy: 0.7516578567996156
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.82it/s]
+run_validation: clsf accuracy: 0.5835655934646804, loss: 1.834098188697232
+Extract emb vecs: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 425/425 [01:25<00:00,  5.00it/s]
+Building ANN forest...
+Top K Retrieval Results - Epoch: 5  Avg top-k accuracy:
+  Prec@10 = 0.56, Corrects@10 = 58551
+  Prec@30 = 0.56, Corrects@30 = 175633
+  Prec@50 = 0.56, Corrects@50 = 292868
+  Prec@100 = 0.56, Corrects@100 = 585916
+  Prec@500 = 0.56, Corrects@500 = 2925432
+  Prec@1000 = 0.56, Corrects@1000 = 5825801
+Epoch[6] sim_acc: 0.93; clsf_acc 0.96
+run_validation: SimilarityAccuracy accuracy: 0.7571359923113887
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:16<00:00,  4.92it/s]
+run_validation: clsf accuracy: 0.592311388755406, loss: 2.060628621524369
+Epoch[7] sim_acc: 0.95; clsf_acc 0.99
+run_validation: SimilarityAccuracy accuracy: 0.76194137433926
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.74it/s]
+run_validation: clsf accuracy: 0.5914464199903893, loss: 2.232411877963475
+Epoch[8] sim_acc: 0.96; clsf_acc 1.00
+run_validation: SimilarityAccuracy accuracy: 0.7586737145603075
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:16<00:00,  4.93it/s]
+run_validation: clsf accuracy: 0.5909658817876021, loss: 2.2864587478371896
+Epoch[9] sim_acc: 0.97; clsf_acc 1.00
+run_validation: SimilarityAccuracy accuracy: 0.7592503604036521
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:16<00:00,  4.92it/s]
+run_validation: clsf accuracy: 0.5882748678519942, loss: 2.320800068950149
+Epoch[10] sim_acc: 0.97; clsf_acc 1.00
+run_validation: SimilarityAccuracy accuracy: 0.756751561749159
+Extract emb vecs: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.77it/s]
+run_validation: clsf accuracy: 0.5888515136953387, loss: 2.325664587103364
+Extract emb vecs: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 425/425 [01:24<00:00,  5.04it/s]
+Building ANN forest...
+Top K Retrieval Results - Epoch: 10  Avg top-k accuracy:
+  Prec@10 = 0.58, Corrects@10 = 60468
+  Prec@30 = 0.58, Corrects@30 = 181792
+  Prec@50 = 0.58, Corrects@50 = 303382
+  Prec@100 = 0.58, Corrects@100 = 607567
+  Prec@500 = 0.58, Corrects@500 = 3039609
+  Prec@1000 = 0.58, Corrects@1000 = 6074404
