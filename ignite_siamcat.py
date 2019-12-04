@@ -77,7 +77,7 @@ val_loader = DataLoader(val_ds, **loader_kwargs)
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR
 params = [*siamese_net.parameters(), *clsf_net.parameters()]
-optimizer = optim.Adam(params, lr=5e-4)
+optimizer = optim.Adam(params, lr=0.0002)
 scheduler = CosineAnnealingLR(
     optimizer, T_max=len(train_ds) * 2 / 100, eta_min=1e-6)
 # Loss functions
@@ -216,6 +216,7 @@ if __name__ == "__main__":
     siamese_evaluator = create_supervised_evaluator(
         siamese_net, device=device, metrics={
             'accuracy': SimilarityAccuracy(1),
+            'loss': Loss(con_loss_fn)
         })
     pbar = ProgressBar()
     pbar.attach(siamese_evaluator)
