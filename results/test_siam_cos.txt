@@ -1,0 +1,60 @@
+chrislin@tch13-test-p4:~/ds-proj$ python ignite_siamcos.py
+Epoch[1] sim_acc: 0.70; clsf_acc 0.62
+run_validation: SimilarityAccuracy accuracy: 0.7427198462277751
+Extract emb vecs: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:19<00:00,  4.18it/s]
+run_validation: clsf accuracy: 0.6009610764055743, loss: 1.2716076252839703
+Epoch[2] sim_acc: 0.82; clsf_acc 0.76
+run_validation: SimilarityAccuracy accuracy: 0.7534839019702066
+Extract emb vecs: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:18<00:00,  4.49it/s]
+run_validation: clsf accuracy: 0.6033637674195098, loss: 1.3708792632156586
+Epoch [3/10]: [192/425]  45%|███████████████████████████████████████████████████                                                              , clsf_loss=0.747, con_loss=0.0701 [02:53<03:31]Epoch[3] sim_acc: 0.89; clsf_acc 0.87
+run_validation: SimilarityAccuracy accuracy: 0.7556943777030274
+Extract emb vecs: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.59it/s]
+run_validation: clsf accuracy: 0.5986544930321961, loss: 1.5422495477191536
+Epoch[4] sim_acc: 0.94; clsf_acc 0.95
+run_validation: SimilarityAccuracy accuracy: 0.7409899086977415
+Extract emb vecs: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:18<00:00,  4.46it/s]
+run_validation: clsf accuracy: 0.6077847188851514, loss: 1.6715164377963183
+Epoch[5] sim_acc: 0.96; clsf_acc 0.99
+run_validation: SimilarityAccuracy accuracy: 0.7396444017299375
+Extract emb vecs: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 82/82 [00:17<00:00,  4.67it/s]
+run_validation: clsf accuracy: 0.6214320038443056, loss: 1.8053637296061629
+Extract emb vecs: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 425/425 [01:40<00:00,  4.22it/s]
+Building ANN forest...
+Top K Retrieval Results - Epoch: 5  Avg top-k accuracy:
+  Prec@10 = 0.62, Corrects@10 = 64225
+  Prec@30 = 0.62, Corrects@30 = 192308
+  Prec@50 = 0.62, Corrects@50 = 320351
+  Prec@100 = 0.61, Corrects@100 = 639579
+  Prec@500 = 0.61, Corrects@500 = 3173288
+  Prec@1000 = 0.61, Corrects@1000 = 6303642
+Traceback (most recent call last):
+  File "ignite_siamcos.py", line 326, in <module>
+    engine.run(s_train_loader, max_epochs=max_epochs)
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 446, in run
+    self._handle_exception(e)
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 410, in _handle_exception
+    raise e
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 433, in run
+    hours, mins, secs = self._run_once_on_dataset()
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 399, in _run_once_on_dataset
+    self._handle_exception(e)
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 410, in _handle_exception
+    raise e
+  File "/opt/anaconda3/lib/python3.7/site-packages/ignite/engine/engine.py", line 387, in _run_once_on_dataset
+    for batch in self.state.dataloader:
+  File "/opt/anaconda3/lib/python3.7/site-packages/torch/utils/data/dataloader.py", line 278, in __iter__
+    return _MultiProcessingDataLoaderIter(self)
+  File "/opt/anaconda3/lib/python3.7/site-packages/torch/utils/data/dataloader.py", line 682, in __init__
+    w.start()
+  File "/opt/anaconda3/lib/python3.7/multiprocessing/process.py", line 112, in start
+    self._popen = self._Popen(self)
+  File "/opt/anaconda3/lib/python3.7/multiprocessing/context.py", line 223, in _Popen
+    return _default_context.get_context().Process._Popen(process_obj)
+  File "/opt/anaconda3/lib/python3.7/multiprocessing/context.py", line 277, in _Popen
+    return Popen(process_obj)
+  File "/opt/anaconda3/lib/python3.7/multiprocessing/popen_fork.py", line 20, in __init__
+    self._launch(process_obj)
+  File "/opt/anaconda3/lib/python3.7/multiprocessing/popen_fork.py", line 70, in _launch
+    self.pid = os.fork()
+OSError: [Errno 12] Cannot allocate memory
