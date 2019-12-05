@@ -30,6 +30,7 @@ gcloud compute instances describe tf-dd2412-proj-exp-p100 --format="(scheduling.
 - delete instance
 ```bash
 gcloud compute instances delete tf-dd2412-proj-exp-p100 --zone=europe-west1-b
+gcloud compute instances delete tf-dd2412-proj-exp-p100 --zone=europe-west1-b --keep-disks=boot
 ```
 
 - List deep learning realted img.
@@ -54,7 +55,7 @@ gcloud compute instances stop <vm-name>
 gcloud compute ssh --zone=<zone> <vm-name>
 ```
 
-- Disk
+- List Disk
 ```bash
 gcloud compute disks list
 ```
