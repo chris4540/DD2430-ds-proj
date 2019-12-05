@@ -62,7 +62,7 @@ val_ds = DeepFashionDataset(
     cfg.root_dir, 'val', transform=trans)
 siamese_train_ds = Siamesize(train_ds)
 siamese_val_ds = Siamesize(val_ds)
-if True:  # For overfitting test
+if False:  # For overfitting test
     train_samples = np.random.choice(len(train_ds), 300, replace=False)
     val_samples = np.random.choice(len(val_ds), 100, replace=False)
     train_ds = Subset(train_ds, train_samples)
@@ -270,49 +270,50 @@ if __name__ == "__main__":
         avg_loss = metrics['loss']
         print("run_validation: clsf accuracy: {}, loss: {}".format(
             avg_accuracy, avg_loss))
+        return
         # if engine.state.epoch % 5 != 0:
             # return
         # ----------------------------------------------------------------------
-        train_loader = DataLoader(train_ds, **loader_kwargs)
-        train_embs, train_labels = extract_embeddings(emb_net, train_loader)
+        # train_loader = DataLoader(train_ds, **loader_kwargs)
+        # train_embs, train_labels = extract_embeddings(emb_net, train_loader)
 
-        emb_dim = train_embs.shape[1]
+        # emb_dim = train_embs.shape[1]
         # ----------------------------------
-        from annoy import AnnoyIndex
-        from tqdm import tqdm
+        # from annoy import AnnoyIndex
+        # from tqdm import tqdm
 
-        t = AnnoyIndex(emb_dim, metric='euclidean')
-        n_trees = 100
-        for i, emb_vec in enumerate(train_embs):
-            t.add_item(i, emb_vec.cpu().numpy())
-        # build a forest of trees
-        tqdm.write("Building ANN forest...")
-        t.build(n_trees)
-        # ----------------------------------
-        top_k_corrects = dict()
-        # Meassure Prec@[5, 10, 20, 30]
-        k_vals = [10, 30, 50, 100, 500, 1000]
-        for i, emb_vec in enumerate(val_embs):
-            correct_cls = val_labels[i]
-            for k in k_vals:
-                idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
-                top_k_classes = train_labels[idx]
-                correct = torch.sum(top_k_classes == correct_cls)
-                accum_corr = top_k_corrects.get(k, 0)
-                top_k_corrects[k] = accum_corr + correct.item()
-        # -------------------------------------------------
-        # calculate back the acc
-        top_k_acc = dict()
-        for k in k_vals:
-            top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
+        # t = AnnoyIndex(emb_dim, metric='euclidean')
+        # n_trees = 100
+        # for i, emb_vec in enumerate(train_embs):
+        #     t.add_item(i, emb_vec.cpu().numpy())
+        # # build a forest of trees
+        # tqdm.write("Building ANN forest...")
+        # t.build(n_trees)
+        # # ----------------------------------
+        # top_k_corrects = dict()
+        # # Meassure Prec@[5, 10, 20, 30]
+        # k_vals = [10, 30, 50, 100, 500, 1000]
+        # for i, emb_vec in enumerate(val_embs):
+        #     correct_cls = val_labels[i]
+        #     for k in k_vals:
+        #         idx = t.get_nns_by_vector(emb_vec.cpu().numpy(), k)
+        #         top_k_classes = train_labels[idx]
+        #         correct = torch.sum(top_k_classes == correct_cls)
+        #         accum_corr = top_k_corrects.get(k, 0)
+        #         top_k_corrects[k] = accum_corr + correct.item()
+        # # -------------------------------------------------
+        # # calculate back the acc
+        # top_k_acc = dict()
+        # for k in k_vals:
+        #     top_k_acc[k] = top_k_corrects[k] / k / val_embs.shape[0]
 
-        tqdm.write(
-            "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
-            .format(engine.state.epoch)
-        )
+        # tqdm.write(
+        #     "Top K Retrieval Results - Epoch: {}  Avg top-k accuracy:"
+        #     .format(engine.state.epoch)
+        # )
 
-        for k in k_vals:
-            tqdm.write("  Prec@{} = {:.2f}, Corrects@{} = {}".format(
-                k, top_k_acc[k], k, top_k_corrects[k]))
+        # for k in k_vals:
+        #     tqdm.write("  Prec@{} = {:.2f}, Corrects@{} = {}".format(
+        #         k, top_k_acc[k], k, top_k_corrects[k]))
 
     engine.run(s_train_loader, max_epochs=max_epochs)
