@@ -8,6 +8,23 @@ from torch.utils.data import Subset
 
 deep_fashion_root_dir = "./deepfashion_data"
 
+catagories = [
+    "Blouse",
+    "Cardigan",
+    "Leggings",
+    "Tee",
+    "Dress",
+    "Jeans",
+    "Shorts",
+    "Skirt",
+    "Jacket",
+    "Top",
+    "Romper",
+    "Sweater",
+    "Tank",
+    "Blazer",
+    "Jumpsuit"
+]
 
 ##################
 # Helper function
@@ -40,6 +57,7 @@ def test_get_item_from_ds():
     train_ds = DeepFashionDataset(deep_fashion_root_dir, 'train')
     assert_dataset(train_ds)
 
+
 def test_subset_from_ds():
     train_ds = DeepFashionDataset(deep_fashion_root_dir, 'train')
     trans = Compose([Resize((224, 224)), ToTensor()])
@@ -50,3 +68,8 @@ def test_subset_from_ds():
     assert_dataset(sub_ds)
 
 
+def test_get_img_from_ds():
+    train_ds = DeepFashionDataset(deep_fashion_root_dir, 'train')
+    img, cat = train_ds.get_img_cat(1)
+    assert cat in catagories
+    assert np.any(np.array(img))

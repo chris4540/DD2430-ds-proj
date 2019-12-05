@@ -58,8 +58,9 @@ class DeepFashionDataset(Dataset):
         self._alldata = pd.read_csv(metadata_csv_file)
 
         # Select images, label from _alldata where dataset == ds_type
+        sel_cols = ['images', 'label', 'category']
         self.data = self._alldata[
-            self._alldata['dataset'] == self.ds_type][['images', 'label']]
+            self._alldata['dataset'] == self.ds_type][sel_cols]
 
         # reset the index to enable access with index
         self.data.reset_index(drop=True, inplace=True)
@@ -90,6 +91,20 @@ class DeepFashionDataset(Dataset):
                 else:
                     img = np.asarray(img_file)
         return (img, target)
+
+    def get_img_cat(self, idx):
+        """
+        Get PIL image and category
+        """
+        metadata = self.data.loc[idx]
+        img_path = metadata['images']
+        category = metadata['category']
+        img_full_path = path_join(self.root, img_path)
+        with open(img_full_path, 'rb') as f:
+            with Image.open(f) as img_file:
+                img = img_file.load()
+        ret = (img, category)
+        return ret
 
     @classmethod
     def set_meta_csv(cls, csvfile):
