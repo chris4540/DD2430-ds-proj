@@ -42,6 +42,8 @@ class SiameseCosDistance:
     >> exp.run(max_epochs=10)
     """
 
+    l2_normalize = True
+
     # opts to make small dataset for overfitting as debug purpose
     _debug = False
 
@@ -177,10 +179,13 @@ class SiameseCosDistance:
 
         emb_vec1, emb_vec2 = siam_net(x)
 
-        l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
-        l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
+        if self.l2_normalize:
+            l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
+            l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
+            contras_loss = con_loss_fn((l2_emb_vec1, l2_emb_vec2), targets)
+        else:
+            contras_loss = con_loss_fn((emb_vec1, emb_vec2), targets)
 
-        contras_loss = con_loss_fn((l2_emb_vec1, l2_emb_vec2), targets)
         y1 = clsf_net(emb_vec1)
         y2 = clsf_net(emb_vec2)
         clsf_loss1 = cs_loss_fn(y1, c1)
@@ -199,11 +204,17 @@ class SiameseCosDistance:
             "loss": loss.item(),
             "con_loss": contras_loss.item(),
             "clsf_loss": clsf_loss.item(),
-            "emb_vecs": [l2_emb_vec1, l2_emb_vec2],
             "cls_pred": cls_pred,
             "cls_true": cls_true,
             "targets": targets
         }
+
+        # add the emb_vecs
+        if self.l2_normalize:
+            ret["emb_vecs"] = [l2_emb_vec1, l2_emb_vec2]
+        else:
+            ret["emb_vecs"] = [emb_vec1, emb_vec2]
+
         return ret
 
     def eval_inference(self, engine, batch):
@@ -215,8 +226,10 @@ class SiameseCosDistance:
             x, targets = _prepare_batch(batch, device=self.device,
                                         non_blocking=self.pin_memory)
             emb_vec1, emb_vec2 = siam_net(x)
-            l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
-            l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
+
+            if self.l2_normalize:
+                l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
+                l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
 
             # make inference with emb_vecs
             # predictions
@@ -228,11 +241,15 @@ class SiameseCosDistance:
             cls_true = torch.cat([c1, c2], dim=0)
 
         ret = {
-            "emb_vecs": [l2_emb_vec1, l2_emb_vec2],
             "cls_pred": cls_pred,
             "cls_true": cls_true,
             "targets": targets
         }
+
+        if self.l2_normalize:
+            ret["emb_vecs"] = [l2_emb_vec1, l2_emb_vec2]
+        else:
+            ret["emb_vecs"] = [emb_vec1, emb_vec2]
         return ret
 
     def run(self, max_epochs=10):
