@@ -35,7 +35,7 @@ from ignite.metrics import Accuracy
 from utils.metrics import SiamSimAccuracy
 
 
-class SiameseCosDistance:
+class SiameseCosDistanceCat:
     """
     Example:
     >> exp = SiameseCosDistance()
@@ -72,8 +72,8 @@ class SiameseCosDistance:
             cudnn.benchmark = True
         else:
             self.device = 'cpu'
+
         self.margin = 1
-        self.scale_factor = 1
 
         self._debug = kwargs.get('debug', False)  # dict.get(k, default)
 
@@ -157,6 +157,14 @@ class SiameseCosDistance:
                 'cross_entropy': CrossEntropyLoss()
             }
         return self._loss_fns
+
+    @property
+    def scale_factor(self):
+        """
+        For inherit, see the doc of
+        SiameseEucDistanceCat.scale_factor for details
+        """
+        return 1.0
 
     @property
     def hparams(self):
