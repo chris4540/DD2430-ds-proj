@@ -33,7 +33,7 @@ for m_sq in [100, 1, 10]:
         lr=0.0005,
         weight_decay=1e-5,
         eta_min=1e-6,
-        epochs=5,
+        epochs=20,
         batch_size=128,
         margin=margin)
     exp.run()
