@@ -1,7 +1,25 @@
 from .siamcos import SiameseCosDistanceWithCat
+# utils
+from ignite.contrib.handlers import ProgressBar
 # Networks
 from network.resnet import ResidualEmbNetwork
 from network.siamese import SiameseNet
+# Loss
+from utils.loss import ContrastiveLoss
+# Factory function
+from ignite.engine import create_supervised_evaluator
+# training
+from ignite.engine import _prepare_batch
+from ignite.engine.engine import Engine
+from ignite.engine import Events
+# metrics
+from ignite.metrics import Average
+from ignite.metrics import Loss
+from utils.metrics import SiamSimAccuracy
+# Optimizer
+import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
 
 class Siamese(SiameseCosDistanceWithCat):
 
@@ -106,3 +124,15 @@ class Siamese(SiameseCosDistanceWithCat):
 
         return self._evaluator
 
+    def run(self):
+        # make scheduler
+        scheduler = self.scheduler
+        # make trainer
+        trainer = self.trainer
+        # make evaluator
+        evaluator = self.evaluator
+
+        pbar = ProgressBar()
+        pbar.attach(trainer, output_transform=lambda x: {
+            'con_loss': x['con_loss'],
+        })

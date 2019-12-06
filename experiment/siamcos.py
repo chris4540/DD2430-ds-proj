@@ -72,6 +72,7 @@ class SiameseCosDistanceWithCat:
     _models = None
     _datasets = None
     _optimizer = None
+    _scheduler = None
     _loss_fns = None
     _trainer = None
     _evaluator = None
@@ -183,6 +184,16 @@ class SiameseCosDistanceWithCat:
             self._optimizer = optimizer
 
         return self._optimizer
+
+    @property
+    def scheduler(self):
+        if not self._scheduler:
+            # make the scheduler first as it is different for different max_epochs
+            train_ds = self.datasets['train']
+            T_max = len(train_ds) * self.hparams.epochs / self.batch_size
+            self._scheduler = CosineAnnealingLR(self.optimizer, T_max=T_max,
+                                                eta_min=self.hparams.eta_min)
+        return self._scheduler
 
     @property
     def loss_fns(self):
@@ -348,13 +359,9 @@ class SiameseCosDistanceWithCat:
         return self._evaluator
 
     def run(self):
-        # make the scheduler first as it is different for different max_epochs
-        train_ds = self.datasets['train']
-        T_max = len(train_ds) * self.hparams.epochs / self.batch_size
-        scheduler = CosineAnnealingLR(
-            self.optimizer, T_max=T_max,
-            eta_min=self.hparams.eta_min)
 
+        # make scheduler
+        scheduler = self.scheduler
         # make trainer
         trainer = self.trainer
         # make evaluator
