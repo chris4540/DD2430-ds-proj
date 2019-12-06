@@ -1,3 +1,17 @@
+"""
+Notes:
+    For the experiement setup, usually we use property to define it.
+    For example, the models definitions is:
+    ```python
+
+    @property
+    def models(self):
+        if not self._models:
+            <the definition>
+            ...
+        return self._models
+    ```
+"""
 import os
 import torch
 import torch.backends.cudnn as cudnn
@@ -5,6 +19,9 @@ import numpy as np
 # utils
 from utils.hparams import HyperParams
 from ignite.contrib.handlers import ProgressBar
+from utils.exp_folder import make_exp_folder
+from utils.csvlogger import CSVLogger
+from collections import OrderedDict
 # Networks
 from network.resnet import ResidualEmbNetwork
 from network.siamese import SiameseNet
@@ -32,7 +49,11 @@ from ignite.engine.engine import Engine
 from ignite.engine import Events
 # metrics
 from ignite.metrics import Accuracy
+from ignite.metrics import Average
+from ignite.metrics import Loss
 from utils.metrics import SiamSimAccuracy
+# handler
+from ignite.handlers import ModelCheckpoint
 
 
 class SiameseCosDistanceCat:
@@ -52,13 +73,18 @@ class SiameseCosDistanceCat:
     _datasets = None
     _optimizer = None
     _loss_fns = None
+    _trainer = None
+    _evaluator = None
 
-    def __init__(self, exp_folder=None, log_interval=1, **kwargs):
+    def __init__(self, exp_folder_path, log_interval=1, **kwargs):
         self._hparams = HyperParams(**kwargs)
         self.hparams.display()
 
-        # self.hparams.save_to_txt(self.exp_folder / 'hparams.txt')
-        # self.hparams.save_to_json(self.exp_folder / 'hparams.json')
+        self.exp_folder = make_exp_folder(exp_folder_path)
+
+        self.hparams.save_to_txt(self.exp_folder / 'hparams.txt')
+        self.hparams.save_to_json(self.exp_folder / 'hparams.json')
+        self._csv_logger = CSVLogger(self.exp_folder / 'results.csv')
 
         self.batch_size = self.hparams.batch_size
         self.pin_memory = True
@@ -73,7 +99,7 @@ class SiameseCosDistanceCat:
         else:
             self.device = 'cpu'
 
-        self.margin = 1
+        self.margin = self.hparams.margin
 
         self._debug = kwargs.get('debug', False)  # dict.get(k, default)
 
@@ -110,8 +136,11 @@ class SiameseCosDistanceCat:
                 cfg.root_dir, 'train', transform=trans)
             val_ds = DeepFashionDataset(
                 cfg.root_dir, 'val', transform=trans)
+            test_ds = DeepFashionDataset(
+                cfg.root_dir, 'test', transform=trans)
             siam_train_ds = Siamesize(train_ds)
             siam_val_ds = Siamesize(val_ds)
+            siam_test_ds = Siamesize(test_ds)
 
             # Subset if needed
             if self._debug:
@@ -121,8 +150,10 @@ class SiameseCosDistanceCat:
                 # Subset the datasets
                 train_ds = Subset(train_ds, train_samples)
                 val_ds = Subset(val_ds, val_samples)
+                test_ds = Subset(test_ds, val_samples)
                 siam_train_ds = Subset(siam_train_ds, train_samples)
                 siam_val_ds = Subset(siam_val_ds, val_samples)
+                siam_test_ds = Subset(siam_test_ds, val_samples)
             # -------------------------------------------------------
             # pack them up
             self._datasets = {
@@ -130,6 +161,7 @@ class SiameseCosDistanceCat:
                 "val": val_ds,
                 "siam_train": siam_train_ds,
                 "siam_val": siam_val_ds,
+                "siam_test": siam_test_ds,
             }
 
         return self._datasets
@@ -169,6 +201,10 @@ class SiameseCosDistanceCat:
     @property
     def hparams(self):
         return self._hparams
+
+    @property
+    def csv_logger(self):
+        return self._csv_logger
 
     def train_update(self, engine, batch):
         # alias
@@ -225,6 +261,26 @@ class SiameseCosDistanceCat:
 
         return ret
 
+    @property
+    def trainer(self):
+        if not self._trainer:
+            trainer = Engine(self.train_update)
+            metrics = {
+                "sim_acc": SiamSimAccuracy(
+                    margin=self.margin,
+                    output_transform=lambda x: (x['emb_vecs'], x['targets'])),
+                "clsf_acc": Accuracy(
+                    output_transform=lambda x: (x['cls_pred'], x['cls_true'])),
+            }
+            for loss in ["loss", "con_loss", "clsf_loss"]:
+                metrics[loss] = Average(output_transform=lambda x: x[loss])
+
+            for name, metric in metrics.items():
+                metric.attach(trainer, name)
+            self._trainer = trainer
+
+        return self._trainer
+
     def eval_inference(self, engine, batch):
         siam_net = self.models['siam_net']
         clsf_net = self.models['clsf_net']
@@ -260,6 +316,33 @@ class SiameseCosDistanceCat:
             ret["emb_vecs"] = [emb_vec1, emb_vec2]
         return ret
 
+    @property
+    def evaluator(self):
+        if not self._evaluator:
+            evaluator = Engine(self.eval_inference)
+            metrics = {
+                "sim_acc": SiamSimAccuracy(
+                    margin=self.margin,
+                    output_transform=lambda x: (x['emb_vecs'], x['targets'])),
+                "clsf_acc": Accuracy(
+                    output_transform=lambda x: (x['cls_pred'], x['cls_true'])),
+                "con_loss": Loss(
+                    self.loss_fns['contrastive'],
+                    output_transform=lambda x: (x['emb_vecs'], x['targets'])
+                ),
+                "clsf_loss": Loss(
+                    self.loss_fns['cross_entropy'],
+                    output_transform=lambda x: (x['cls_pred'], x['cls_true'])
+                )
+            }
+            for name, metric in metrics.items():
+                metric.attach(evaluator, name)
+
+            # save down
+            self._evaluator = evaluator
+
+        return self._evaluator
+
     def run(self, max_epochs=10):
         # make the scheduler first as it is different for different max_epochs
         train_ds = self.datasets['train']
@@ -267,26 +350,16 @@ class SiameseCosDistanceCat:
             self.optimizer, T_max=len(train_ds) * max_epochs / self.batch_size,
             eta_min=1e-6)
 
-        # ---------------
-        # make engine
-        # ---------------
-        trainer = Engine(self.train_update)
-        metrics = {
-            "sim_acc": SiamSimAccuracy(
-                margin=self.margin,
-                output_transform=lambda x: (x['emb_vecs'], x['targets'])),
-            "clsf_acc": Accuracy(
-                output_transform=lambda x: (x['cls_pred'], x['cls_true']))
-        }
-        for name, metric in metrics.items():
-            metric.attach(trainer, name)
+        # make trainer
+        trainer = self.trianer
+        # make evaluator
+        evaluator = self.evaluator
 
         pbar = ProgressBar()
         pbar.attach(trainer, output_transform=lambda x: {
             'con_loss': x['con_loss'],
             'clsf_loss': x['clsf_loss']
         })
-
         # --------------
         # callbacks
         # --------------
@@ -307,16 +380,46 @@ class SiameseCosDistanceCat:
         @trainer.on(Events.EPOCH_COMPLETED)
         def run_validation(engine):
             # prepare the evaluator
-            evaluator = Engine(self.eval_inference)
-            for name, metric in metrics.items():
-                metric.attach(evaluator, name)
             ProgressBar(desc="Evaluating").attach(evaluator)
             evaluator.run(
                 DataLoader(
                     self.datasets['siam_val'],
                     **self.loader_kwargs))
-            avg_acc = evaluator.state.metrics['sim_acc']
-            print(avg_acc)
+
+        def eval_callbacks(mode='val'):
+            # prepare the evaluator
+            ProgressBar(desc="Evalating on " + mode).attach(evaluator)
+            ds = self.datasets['siam' + mode]
+            evaluator.run(
+                DataLoader(ds, **self.loader_kwargs))
+
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def log_to_csv(engine):
+
+            log = OrderedDict()
+            # Log training part
+            log['epoch'] = engine.state.epoch
+            for col in ["loss", "con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
+                log["train_" + col] = engine.state.metrics[col]
+
+            # log validation
+            eval_callbacks(mode='val')
+            for col in ["con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
+                log["val_" + col] = evaluator.metrics[col]
+
+            # log test
+            eval_callbacks(mode='test')
+            for col in ["con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
+                log["test_" + col] = evaluator.metrics[col]
+
+        # save checkpoints
+        to_save = {k: v for k, v in self.models if k != "siam_net"}
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED,
+            ModelCheckpoint(
+                dirname=self.exp_folder, filename_prefix='',
+                n_saved=3, create_dir=False, save_as_state_dict=True),
+            to_save)
 
         # start training
         trainer.run(
