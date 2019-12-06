@@ -73,7 +73,7 @@ class SiameseCosDistance:
         self.margin = 1
         self.scale_factor = 1
 
-        self._debug = kwargs['debug']
+        self._debug = kwargs.get('debug', False)  # dict.get(k, default)
 
     # --------------------------------
     # Experiment definitions
@@ -114,8 +114,8 @@ class SiameseCosDistance:
             # Subset if needed
             if self._debug:
                 train_samples = np.random.choice(
-                    len(train_ds), 300, replace=False)
-                val_samples = np.random.choice(len(val_ds), 100, replace=False)
+                    len(train_ds), 600, replace=False)
+                val_samples = np.random.choice(len(val_ds), 200, replace=False)
                 # Subset the datasets
                 train_ds = Subset(train_ds, train_samples)
                 val_ds = Subset(val_ds, val_samples)
