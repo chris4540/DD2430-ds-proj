@@ -56,10 +56,10 @@ from utils.metrics import SiamSimAccuracy
 from ignite.handlers import ModelCheckpoint
 
 
-class SiameseCosDistanceCat:
+class SiameseCosDistanceWithCat:
     """
     Example:
-    >> exp = SiameseCosDistance()
+    >> exp = SiameseCosDistanceWithCat()
     >> exp.run(max_epochs=10)
     """
 
@@ -145,8 +145,9 @@ class SiameseCosDistanceCat:
             # Subset if needed
             if self._debug:
                 train_samples = np.random.choice(
-                    len(train_ds), 600, replace=False)
-                val_samples = np.random.choice(len(val_ds), 200, replace=False)
+                    len(train_ds), 1000, replace=False)
+                val_samples = np.random.choice(
+                    len(val_ds), 100, replace=False)
                 # Subset the datasets
                 train_ds = Subset(train_ds, train_samples)
                 val_ds = Subset(val_ds, val_samples)
@@ -271,13 +272,14 @@ class SiameseCosDistanceCat:
                     output_transform=lambda x: (x['emb_vecs'], x['targets'])),
                 "clsf_acc": Accuracy(
                     output_transform=lambda x: (x['cls_pred'], x['cls_true'])),
+                "loss": Average(output_transform=lambda x: x["loss"]),
+                "con_loss": Average(output_transform=lambda x: x["con_loss"]),
+                "clsf_loss": Average(output_transform=lambda x: x["clsf_loss"])
             }
-            for loss in ["loss", "con_loss", "clsf_loss"]:
-                metrics[loss] = Average(output_transform=lambda x: x[loss])
-
             for name, metric in metrics.items():
                 metric.attach(trainer, name)
             self._trainer = trainer
+            self.train_metrics = metrics
 
         return self._trainer
 
@@ -343,15 +345,16 @@ class SiameseCosDistanceCat:
 
         return self._evaluator
 
-    def run(self, max_epochs=10):
+    def run(self):
         # make the scheduler first as it is different for different max_epochs
         train_ds = self.datasets['train']
+        T_max = len(train_ds) * self.hparams.epochs / self.batch_size
         scheduler = CosineAnnealingLR(
-            self.optimizer, T_max=len(train_ds) * max_epochs / self.batch_size,
+            self.optimizer, T_max=T_max,
             eta_min=1e-6)
 
         # make trainer
-        trainer = self.trianer
+        trainer = self.trainer
         # make evaluator
         evaluator = self.evaluator
 
@@ -368,7 +371,7 @@ class SiameseCosDistanceCat:
             Events.ITERATION_COMPLETED, lambda engine: scheduler.step())
 
         @trainer.on(Events.EPOCH_COMPLETED)
-        def log_training_acc(engine):
+        def show_training_acc(engine):
             epoch = engine.state.epoch
             metrics = engine.state.metrics
             sim_acc = metrics['sim_acc']
@@ -377,21 +380,17 @@ class SiameseCosDistanceCat:
                 "Epoch[{}] sim_acc: {:.2f}; clsf_acc {:.2f}"
                 .format(epoch, sim_acc, clsf_acc))
 
-        @trainer.on(Events.EPOCH_COMPLETED)
-        def run_validation(engine):
-            # prepare the evaluator
-            ProgressBar(desc="Evaluating").attach(evaluator)
-            evaluator.run(
-                DataLoader(
-                    self.datasets['siam_val'],
-                    **self.loader_kwargs))
-
         def eval_callbacks(mode='val'):
             # prepare the evaluator
             ProgressBar(desc="Evalating on " + mode).attach(evaluator)
-            ds = self.datasets['siam' + mode]
+            ds = self.datasets['siam_' + mode]
             evaluator.run(
                 DataLoader(ds, **self.loader_kwargs))
+            metrics = evaluator.state.metrics
+            sim_acc = metrics['sim_acc']
+            clsf_acc = metrics['clsf_acc']
+            pbar.log_message(
+                mode + " sim_acc: {:.2f}; clsf_acc {:.2f}".format(sim_acc, clsf_acc))
 
         @trainer.on(Events.EPOCH_COMPLETED)
         def log_to_csv(engine):
@@ -405,20 +404,25 @@ class SiameseCosDistanceCat:
             # log validation
             eval_callbacks(mode='val')
             for col in ["con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
-                log["val_" + col] = evaluator.metrics[col]
+                log["val_" + col] = evaluator.state.metrics[col]
 
             # log test
             eval_callbacks(mode='test')
             for col in ["con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
-                log["test_" + col] = evaluator.metrics[col]
+                log["test_" + col] = evaluator.state.metrics[col]
+            # write down
+            self.csv_logger.log_with_order(log)
 
         # save checkpoints
-        to_save = {k: v for k, v in self.models if k != "siam_net"}
+        to_save = {k: v for k, v in self.models.items() if k != "siam_net"}
         trainer.add_event_handler(
             Events.EPOCH_COMPLETED,
             ModelCheckpoint(
                 dirname=self.exp_folder, filename_prefix='',
-                n_saved=3, create_dir=False, save_as_state_dict=True),
+                save_interval=1,
+                n_saved=1e4, create_dir=True,
+                save_as_state_dict=True,
+                require_empty=False),
             to_save)
 
         # start training
@@ -426,4 +430,4 @@ class SiameseCosDistanceCat:
             DataLoader(
                 self.datasets['siam_train'],
                 **self.loader_kwargs, shuffle=True),
-            max_epochs=max_epochs)
+            max_epochs=self.hparams.epochs)
