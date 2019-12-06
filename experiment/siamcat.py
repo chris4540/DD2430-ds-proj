@@ -23,6 +23,7 @@ class SiameseEucDistanceWithCat(SiameseCosDistanceWithCat):
         We consider an extreme case that min(contras_loss) ~ (m**2) * (0.5).
         That is all distances among the embedding vectors are zeros.
         """
-        # ret = (self.margin ** 2)
-        ret = 1
+        lambda_ = self.hparams.lambda_
+        ret = (self.margin ** 2) * 0.5
+        ret = lambda_ / ret
         return ret

@@ -14,6 +14,7 @@ class HyperParams:
     eta_min = 1e-5
     weight_decay = 1e-5
     margin = None
+    lambda_ = None
 
     def __init__(self, **kwargs):
         for k in kwargs.keys():

@@ -238,7 +238,7 @@ class SiameseCosDistanceWithCat:
         clsf_loss1 = cs_loss_fn(y1, c1)
         clsf_loss2 = cs_loss_fn(y2, c2)
 
-        loss = contras_loss + (clsf_loss1 + clsf_loss2) * self.scale_factor
+        loss = self.scale_factor * contras_loss + clsf_loss1 + clsf_loss2
         loss.backward()
         optimizer.step()
 
@@ -362,6 +362,7 @@ class SiameseCosDistanceWithCat:
 
         pbar = ProgressBar()
         pbar.attach(trainer, output_transform=lambda x: {
+            'loss': x['loss'],
             'con_loss': x['con_loss'],
             'clsf_loss': x['clsf_loss']
         })
