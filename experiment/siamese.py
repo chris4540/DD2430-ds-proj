@@ -25,7 +25,6 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 # handler
 from ignite.handlers import ModelCheckpoint
 
-
 class Siamese(SiameseCosDistanceWithCat):
 
     # Modifications:
@@ -205,3 +204,6 @@ class Siamese(SiameseCosDistanceWithCat):
                 self.datasets['siam_train'],
                 **self.loader_kwargs, shuffle=True),
             max_epochs=self.hparams.epochs)
+
+class SiameseCosineDistance(Siamese):
+    pass
