@@ -6,6 +6,7 @@ class SiameseEucDistanceWithCat(SiameseCosDistanceWithCat):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._scale_factor = kwargs.get("scale_factor", None)
 
     @property
     def scale_factor(self):
@@ -23,6 +24,11 @@ class SiameseEucDistanceWithCat(SiameseCosDistanceWithCat):
         We consider an extreme case that min(contras_loss) ~ (m**2) * (0.5).
         That is all distances among the embedding vectors are zeros.
         """
+
+        # if we fix the scale_factor
+        if self._scale_factor:
+            return self._scale_factor
+
         lambda_ = self.hparams.lambda_
         ret = (self.margin ** 2) * 0.5
         ret = lambda_ / ret
