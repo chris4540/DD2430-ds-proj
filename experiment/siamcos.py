@@ -177,7 +177,9 @@ class SiameseCosDistanceWithCat:
                 *siam_net.parameters(),
                 *clsf_net.parameters()
             ]
-            optimizer = optim.Adam(params, lr=5e-4, weight_decay=1e-5)
+            optimizer = optim.Adam(
+                params, lr=self.hparams.lr,
+                weight_decay=self.hparams.weight_decay)
             self._optimizer = optimizer
 
         return self._optimizer
@@ -351,7 +353,7 @@ class SiameseCosDistanceWithCat:
         T_max = len(train_ds) * self.hparams.epochs / self.batch_size
         scheduler = CosineAnnealingLR(
             self.optimizer, T_max=T_max,
-            eta_min=1e-6)
+            eta_min=self.hparams.eta_min)
 
         # make trainer
         trainer = self.trainer
@@ -377,7 +379,7 @@ class SiameseCosDistanceWithCat:
             sim_acc = metrics['sim_acc']
             clsf_acc = metrics['clsf_acc']
             pbar.log_message(
-                "Epoch[{}] sim_acc: {:.2f}; clsf_acc {:.2f}"
+                "Epoch[{}] sim_acc: {:.2f}; clsf_acc: {:.2f}"
                 .format(epoch, sim_acc, clsf_acc))
 
         def eval_callbacks(mode='val'):
@@ -387,10 +389,10 @@ class SiameseCosDistanceWithCat:
             evaluator.run(
                 DataLoader(ds, **self.loader_kwargs))
             metrics = evaluator.state.metrics
-            sim_acc = metrics['sim_acc']
-            clsf_acc = metrics['clsf_acc']
             pbar.log_message(
-                mode + " sim_acc: {:.2f}; clsf_acc {:.2f}".format(sim_acc, clsf_acc))
+                mode +
+                " sim_acc: {sim_acc:.2f}; clsf_acc: {clsf_acc:.2f}; con_loss: {con_loss:.2f}; clsf_loss: {clsf_loss:.2f}"
+                .format(**metrics))
 
         @trainer.on(Events.EPOCH_COMPLETED)
         def log_to_csv(engine):
@@ -410,6 +412,8 @@ class SiameseCosDistanceWithCat:
             eval_callbacks(mode='test')
             for col in ["con_loss", "clsf_loss", "sim_acc", "clsf_acc"]:
                 log["test_" + col] = evaluator.state.metrics[col]
+            # log learning rate
+            log['lr'] = scheduler.get_lr()[0]
             # write down
             self.csv_logger.log_with_order(log)
 

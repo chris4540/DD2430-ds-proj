@@ -39,36 +39,36 @@ class ResidualEmbNetwork(nn.Module):
         return out
 
 
-class ResidualNetwork(nn.Module):
+# class ResidualNetwork(nn.Module):
 
-    def __init__(self, depth=18, nb_classes=46, emb_net=None):
-        super().__init__()
-        if emb_net:
-            # copy the reference
-            self._emb_net = emb_net
-            self.depth = emb_net.depth
-        else:
-            self.depth = depth
-            self._emb_net = ResidualEmbNetwork(depth)
+#     def __init__(self, depth=18, nb_classes=46, emb_net=None):
+#         super().__init__()
+#         if emb_net:
+#             # copy the reference
+#             self._emb_net = emb_net
+#             self.depth = emb_net.depth
+#         else:
+#             self.depth = depth
+#             self._emb_net = ResidualEmbNetwork(depth)
 
-        self.nb_classes = nb_classes
-        self._add_fully_connected_layer()
+#         self.nb_classes = nb_classes
+#         self._add_fully_connected_layer()
 
-    def _add_fully_connected_layer(self):
-        self.fc = nn.Sequential(
-            nn.Linear(self._emb_net.emb_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, self.nb_classes))
+#     def _add_fully_connected_layer(self):
+#         self.fc = nn.Sequential(
+#             nn.Linear(self._emb_net.emb_dim, 256),
+#             nn.ReLU(),
+#             nn.Linear(256, self.nb_classes))
 
-    def forward(self, x):
-        emb_vecs = self._emb_net(x)
-        out = self.foward_from_emb_vec(emb_vecs)
-        return out
+#     def forward(self, x):
+#         emb_vecs = self._emb_net(x)
+#         out = self.foward_from_emb_vec(emb_vecs)
+#         return out
 
-    def foward_from_emb_vec(self, emb_vecs):
-        out = self.fc(emb_vecs)
-        return out
+#     def foward_from_emb_vec(self, emb_vecs):
+#         out = self.fc(emb_vecs)
+#         return out
 
-    @property
-    def emb_net(self):
-        return self._emb_net
+#     @property
+#     def emb_net(self):
+#         return self._emb_net

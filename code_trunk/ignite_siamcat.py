@@ -34,7 +34,7 @@ else:
 
 # Model
 from network.resnet import ResidualEmbNetwork
-from network.resnet import ResidualNetwork
+# from network.resnet import ResidualNetwork
 from network.siamese import SiameseNet
 from network.clsf_net import ClassificationNet
 
@@ -91,7 +91,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _Loss
 from torch.nn import CrossEntropyLoss
-from trainer.loss import ContrastiveLoss
+from utils.loss import ContrastiveLoss
 
 import numpy as np
 # margin = np.sqrt(1000)
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     from ignite.engine import create_supervised_evaluator
     from ignite.metrics import Loss
     from utils import extract_embeddings
-    from trainer.metrics import SiameseNetSimilarityAccuracy as SimilarityAccuracy
+    from utils.metrics import SiamSimAccuracy as SimilarityAccuracy
     siamese_evaluator = create_supervised_evaluator(
         siamese_net, device=device, non_blocking=pin_memory, metrics={
             'accuracy': SimilarityAccuracy(margin),

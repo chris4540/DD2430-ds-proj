@@ -1,7 +1,7 @@
-from .siamcos import SiameseCosDistanceCat
+from .siamcos import SiameseCosDistanceWithCat
 
 
-class SiameseEucDistanceCat(SiameseCosDistanceCat):
+class SiameseEucDistanceWithCat(SiameseCosDistanceWithCat):
     l2_normalize = False
 
     def __init__(self, *args, **kwargs):
@@ -23,5 +23,6 @@ class SiameseEucDistanceCat(SiameseCosDistanceCat):
         We consider an extreme case that min(contras_loss) ~ (m**2) * (0.5).
         That is all distances among the embedding vectors are zeros.
         """
-        ret = 0.5 * (self.margin ** 2)
+        # ret = (self.margin ** 2)
+        ret = 1
         return ret
