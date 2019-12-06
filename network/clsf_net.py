@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class ClassificationNet(nn.Module):
     """
-    A subnet as a part of resnet
+    A feed forward network to map embedding vector to classfying layer
     """
 
     def __init__(self, emb_dim=512, nb_classes=46):
