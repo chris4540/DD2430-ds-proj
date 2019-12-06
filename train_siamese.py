@@ -26,14 +26,14 @@
 # # fig.savefig('fashion_mnist.png', bbox_inches='tight')
 from experiment.siamese import Siamese
 import numpy as np
-m_sq = 1
-margin = np.round(np.sqrt(m_sq), decimals=4)
-exp = Siamese(
-    "./exp_folders/exp_siamcat_m2_{}".format(m_sq),
-    lr=0.0005,
-    weight_decay=1e-5,
-    eta_min=1e-6,
-    epochs=20,
-    batch_size=128,
-    margin=margin)
-exp.run()
+for m_sq in [100, 1, 10]:
+    margin = np.round(np.sqrt(m_sq), decimals=4)
+    exp = Siamese(
+        "./exp_folders/exp_siamese_m2_{}".format(m_sq),
+        lr=0.0005,
+        weight_decay=1e-5,
+        eta_min=1e-6,
+        epochs=5,
+        batch_size=128,
+        margin=margin)
+    exp.run()
