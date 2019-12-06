@@ -1,13 +1,29 @@
 import os
+# utils
+from utils.hparams import HyperParams
+# Networks
 from network.resnet import ResidualEmbNetwork
 from network.siamese import SiameseNet
 from network.clsf_net import ClassificationNet
 # datasets
+from utils.datasets import DeepFashionDataset
+from torchvision.transforms import Compose
+from torchvision.transforms import Resize
+from torchvision.transforms import ToTensor
+from torchvision.transforms import Normalize
+from config.deep_fashion import DeepFashionConfig as cfg
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 from utils.datasets import Siamesize
-from utils.datasets import DeepFashionDataset
-from config.deep_fashion import DeepFashionConfig as cfg
+# Optimizer
+import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR
+# Loss
+from torch.nn import CrossEntropyLoss
+from utils.loss import ContrastiveLoss
+# training
+from ignite.engine.engine import Engine
+
 
 class SiameseCosDistance:
     """
@@ -22,16 +38,24 @@ class SiameseCosDistance:
     #
     _models = None
     _datasets = None
+    _optimizer = None
+    _loss_fns = None
 
-    def __init__(self):
-        self.batch_size = 128
+    def __init__(self, exp_folder=None, log_interval=1, **kwargs):
+        self._hparams = HyperParams(**kwargs)
+        self.hparams.display()
+
+        # self.hparams.save_to_txt(self.exp_folder / 'hparams.txt')
+        # self.hparams.save_to_json(self.exp_folder / 'hparams.json')
+
+        self.batch_size = self.hparams.batch_size
         self.loader_kwargs = {
             'pin_memory': True,
             'batch_size': self.batch_size,
             'num_workers': os.cpu_count()
         }
         self.device = 'cpu'
-
+        self.margin = 1
 
     # --------------------------------
     # Experiment definitions
@@ -68,7 +92,8 @@ class SiameseCosDistance:
 
             # Subset if needed
             if self._debug:
-                train_samples = np.random.choice(len(train_ds), 300, replace=False)
+                train_samples = np.random.choice(
+                    len(train_ds), 300, replace=False)
                 val_samples = np.random.choice(len(val_ds), 100, replace=False)
                 # Subset the datasets
                 train_ds = Subset(train_ds, train_samples)
@@ -85,7 +110,6 @@ class SiameseCosDistance:
             }
 
         return self._datasets
-
 
     @property
     def optimizer(self):
@@ -120,11 +144,14 @@ class SiameseCosDistance:
             }
         return self._loss_fns
 
-
     @property
     def hparams(self):
         return self._hparams
 
-
     def run(self, max_epochs=10):
-        pass
+
+        # make the scheduler first as it is different for different max_epochs
+        train_ds = self.datasets['train']
+        scheduler = CosineAnnealingLR(
+            self.optimizer, T_max=len(train_ds) * max_epochs / self.batch_size,
+            eta_min=1e-6)
