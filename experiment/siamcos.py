@@ -206,8 +206,36 @@ class SiameseCosDistance:
         }
         return ret
 
-    def run(self, max_epochs=10):
+    def eval_inference(self, engine, batch):
+        siam_net = self.models['siam_net']
+        clsf_net = self.models['clsf_net']
+        siam_net.eval()
+        clsf_net.eval()
+        with torch.no_grad():
+            x, targets = _prepare_batch(batch, device=self.device,
+                                        non_blocking=self.pin_memory)
+            emb_vec1, emb_vec2 = siam_net(x)
+            l2_emb_vec1 = F.normalize(emb_vec1, p=2, dim=1)
+            l2_emb_vec2 = F.normalize(emb_vec2, p=2, dim=1)
 
+            # make inference with emb_vecs
+            # predictions
+            y1 = clsf_net(emb_vec1)
+            y2 = clsf_net(emb_vec2)
+            # true labels
+            c1, c2, _ = targets
+            cls_pred = torch.cat([y1, y2], dim=0)
+            cls_true = torch.cat([c1, c2], dim=0)
+
+        ret = {
+            "emb_vecs": [l2_emb_vec1, l2_emb_vec2],
+            "cls_pred": cls_pred,
+            "cls_true": cls_true,
+            "targets": targets
+        }
+        return ret
+
+    def run(self, max_epochs=10):
         # make the scheduler first as it is different for different max_epochs
         train_ds = self.datasets['train']
         scheduler = CosineAnnealingLR(
@@ -217,7 +245,7 @@ class SiameseCosDistance:
         # ---------------
         # make engine
         # ---------------
-        engine = Engine(self.train_update)
+        trainer = Engine(self.train_update)
         metrics = {
             "sim_acc": SiamSimAccuracy(
                 margin=self.margin,
@@ -226,15 +254,48 @@ class SiameseCosDistance:
                 output_transform=lambda x: (x['cls_pred'], x['cls_true']))
         }
         for name, metric in metrics.items():
-            metric.attach(engine, name)
+            metric.attach(trainer, name)
 
         pbar = ProgressBar()
-        pbar.attach(engine, output_transform=lambda x: {
+        pbar.attach(trainer, output_transform=lambda x: {
             'con_loss': x['con_loss'],
             'clsf_loss': x['clsf_loss']
         })
 
+        # --------------
+        # callbacks
+        # --------------
+        # Scheduler step forwards
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, lambda engine: scheduler.step())
+
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def log_training_acc(engine):
+            epoch = engine.state.epoch
+            metrics = engine.state.metrics
+            sim_acc = metrics['sim_acc']
+            clsf_acc = metrics['clsf_acc']
+            pbar.log_message(
+                "Epoch[{}] sim_acc: {:.2f}; clsf_acc {:.2f}"
+                .format(epoch, sim_acc, clsf_acc))
+
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def run_validation(engine):
+            # prepare the evaluator
+            evaluator = Engine(self.eval_inference)
+            for name, metric in metrics.items():
+                metric.attach(evaluator, name)
+            ProgressBar(desc="Evaluating").attach(evaluator)
+            evaluator.run(
+                DataLoader(
+                    self.datasets['siam_val'],
+                    **self.loader_kwargs))
+            avg_acc = evaluator.state.metrics['sim_acc']
+            print(avg_acc)
+
         # start training
-        data = DataLoader(
-            self.datasets['siam_train'], **self.loader_kwargs, shuffle=True)
-        engine.run(data, max_epochs=max_epochs)
+        trainer.run(
+            DataLoader(
+                self.datasets['siam_train'],
+                **self.loader_kwargs, shuffle=True),
+            max_epochs=max_epochs)
