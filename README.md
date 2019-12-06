@@ -48,7 +48,8 @@ $ scripts/create_deepfashion_meta.py
 - [ ] Create detailed attributes for a class. Person in charge: Hassan
 - [ ] Model candidate: vgg16 (wo bn)
 - [ ] Search classical unsupervised learning method for meansuring cluster distances
-- [ ] Each epoch unspervised evaluation
+- [x] ~~Each epoch unspervised evaluation~~
+- [ ] csv logger
 
 
 ## Reason to use ignite
