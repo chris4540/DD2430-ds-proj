@@ -11,10 +11,9 @@ TODO:
 import torch
 import numpy as np
 from tqdm import tqdm
-USING_CUDA = torch.cuda.is_available()
 
 
-def map_imgs_to_embs(model, images):
+def map_imgs_to_embs(model, images, device):
     """
     With the deep network, project images / batch of images to embedding space
     """
@@ -22,32 +21,25 @@ def map_imgs_to_embs(model, images):
 
     # turn the model to evaluation mode
     model.eval()
+    images = images.to(device)
     with torch.no_grad():
-        if USING_CUDA:
-            images = images.cuda()
-
         ret = model(images)
-
-    ret = ret.cpu()
-
     return ret
 
 
-def extract_embeddings(model, dataloader):
+def extract_embeddings(emb_net, dataloader, device="cuda"):
     """
     TODO:
     model should have attr emb_net and use it
     """
-    if hasattr(model, 'emb_net'):
-        emb_net = model.emb_net
-    else:
-        emb_net = model
+
+    emb_net.to(device)
 
     emb_list = []
     label_list = []
     for imgs, lbls in tqdm(dataloader, desc='Extract emb vecs'):
         # extract embedding vector
-        emb_vecs = map_imgs_to_embs(model, imgs)
+        emb_vecs = map_imgs_to_embs(emb_net, imgs, device)
         # save the value to a list
         emb_list.append(emb_vecs)
         label_list.append(lbls)

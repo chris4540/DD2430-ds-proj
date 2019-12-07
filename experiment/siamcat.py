@@ -26,10 +26,9 @@ class SiameseEucDistanceWithCat(SiameseCosDistanceWithCat):
         """
 
         # if we fix the scale_factor
-        if self._scale_factor:
+        if self._scale_factor is not None:
             return self._scale_factor
 
         lambda_ = self.hparams.lambda_
-        ret = (self.margin ** 2) * 0.5
-        ret = lambda_ / ret
+        ret = lambda_ * 2 / (self.margin ** 2)
         return ret

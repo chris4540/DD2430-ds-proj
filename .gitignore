@@ -9,6 +9,7 @@ FashionMNIST
 
 *.png
 exp_folders/
+exp_results/
 ############## PYTHON IGNORE LIST ##################
 # Byte-compiled / optimized / DLL files
 __pycache__/

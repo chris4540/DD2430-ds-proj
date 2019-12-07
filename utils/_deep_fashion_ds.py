@@ -102,7 +102,7 @@ class DeepFashionDataset(Dataset):
         img_full_path = path_join(self.root, img_path)
         with open(img_full_path, 'rb') as f:
             with Image.open(f) as img_file:
-                img = img_file.load()
+                img = np.asarray(img_file)
         ret = (img, category)
         return ret
 
