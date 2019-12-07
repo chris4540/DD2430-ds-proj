@@ -169,17 +169,21 @@ class SiameseCosDistanceWithCat:
         return self._datasets
 
     @property
+    def model_params(self):
+        models = self.models
+        siam_net = models['siam_net']
+        clsf_net = models['clsf_net']
+        params = [
+            *siam_net.parameters(),
+            *clsf_net.parameters()
+        ]
+        return params
+
+    @property
     def optimizer(self):
         if self._optimizer is None:
-            models = self.models
-            siam_net = models['siam_net']
-            clsf_net = models['clsf_net']
-            params = [
-                *siam_net.parameters(),
-                *clsf_net.parameters()
-            ]
             optimizer = optim.Adam(
-                params, lr=self.hparams.lr,
+                self.model_params, lr=self.hparams.lr,
                 weight_decay=self.hparams.weight_decay)
             self._optimizer = optimizer
 

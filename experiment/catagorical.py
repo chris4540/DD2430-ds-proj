@@ -3,8 +3,23 @@ The simplest method to train a network for mapping img to embbeding space
 """
 from .siamcos import SiameseCosDistanceWithCat
 # Networks
+import torch.nn as nn
 from network.resnet import ResidualEmbNetwork
 from network.clsf_net import ClassificationNet
+# Optimizer
+import torch.optim as optim
+# metrics
+from ignite.metrics import Accuracy
+from ignite.metrics import Average
+from ignite.metrics import Loss
+from utils.metrics import SiamSimAccuracy
+# training
+from ignite.engine import _prepare_batch
+from ignite.engine.engine import Engine
+from ignite.engine import Events
+# handler
+from ignite.handlers import ModelCheckpoint
+
 
 class CatClassification(SiameseCosDistanceWithCat):
 
@@ -31,16 +46,11 @@ class CatClassification(SiameseCosDistanceWithCat):
         return self._models
 
     @property
-    def optimizer(self):
-        if self._optimizer is None:
-            cnn_net = self.models['cnn_net']
-            optimizer = optim.Adam(
-                cnn_net.parameters(),
-                lr=self.hparams.lr,
-                weight_decay=self.hparams.weight_decay)
-            self._optimizer = optimizer
-
-        return self._optimizer
+    def model_params(self):
+        models = self.models
+        cnn_net = models['cnn_net']
+        ret = cnn_net.parameters()
+        return ret
 
     def train_update(self, engine, batch):
         """
@@ -50,29 +60,51 @@ class CatClassification(SiameseCosDistanceWithCat):
         See also:
             https://pytorch.org/ignite/quickstart.html#f1
         """
-        pass
-        # # alias
-        # siam_net = self.models['siam_net']
-        # optimizer = self.optimizer
-        # con_loss_fn = self.loss_fns['contrastive']
 
-        # siam_net.train()
-        # optimizer.zero_grad()
-        # x, targets = _prepare_batch(batch, device=self.device,
-        #                             non_blocking=self.pin_memory)
-        # emb_vec1, emb_vec2 = siam_net(x)
+        # alias
+        cnn_net = self.models['cnn_net']
+        optimizer = self.optimizer
+        loss_fn = self.loss_fns['cross_entropy']
 
-        # contras_loss = con_loss_fn((emb_vec1, emb_vec2), targets)
+        cnn_net.train()
+        optimizer.zero_grad()
+        x, y = _prepare_batch(batch, device=self.device,
+                              non_blocking=self.pin_memory)
+        y_pred = cnn_net(x)
+        loss = loss_fn(y_pred, y)
+        loss.backward()
+        optimizer.step()
 
-        # loss = contras_loss
-        # loss.backward()
-        # optimizer.step()
+        # contruct the return of the processing function of a engine
+        ret = {
+            "clsf_loss": loss.item(),
+            "cls_pred": y_pred,
+            "cls_true": y,
+        }
 
-        # # contruct the return of the processing function of a engine
-        # ret = {
-        #     "con_loss": contras_loss.item(),
-        #     "targets": targets,
-        #     "emb_vecs": [emb_vec1, emb_vec2]
-        # }
+        return ret
 
-        # return ret
+    @property
+    def trainer(self):
+        if not self._trainer:
+            trainer = Engine(self.train_update)
+            metrics = {
+                "clsf_acc": Accuracy(
+                    output_transform=lambda x: (x['cls_pred'], x['cls_true'])),
+                "clsf_loss": Average(output_transform=lambda x: x["clsf_loss"])
+            }
+            for name, metric in metrics.items():
+                metric.attach(trainer, name)
+            self._trainer = trainer
+            self.train_metrics = metrics
+
+        return self._trainer
+
+    def run(self):
+
+        # make scheduler
+        scheduler = self.scheduler
+        # make trainer
+        trainer = self.trainer
+        # make evaluator
+        evaluator = self.evaluator
