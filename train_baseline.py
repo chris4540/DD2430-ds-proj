@@ -8,7 +8,6 @@ from experiment.catagorical import CatClassification
 import numpy as np
 exp = CatClassification(
     "./exp_folders/exp_cat",
-    debug=True,
     lr=0.0005,
     weight_decay=1e-5,
     eta_min=1e-6,
