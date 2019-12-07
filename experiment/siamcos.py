@@ -161,6 +161,7 @@ class SiameseCosDistanceWithCat:
             self._datasets = {
                 "train": train_ds,
                 "val": val_ds,
+                "test": test_ds,
                 "siam_train": siam_train_ds,
                 "siam_val": siam_val_ds,
                 "siam_test": siam_test_ds,

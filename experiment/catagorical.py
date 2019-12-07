@@ -2,6 +2,10 @@
 The simplest method to train a network for mapping img to embbeding space
 """
 from .siamcos import SiameseCosDistanceWithCat
+# utils
+from ignite.contrib.handlers import ProgressBar
+from collections import OrderedDict
+from torch.utils.data import DataLoader
 # Networks
 import torch.nn as nn
 from network.resnet import ResidualEmbNetwork
@@ -15,7 +19,8 @@ from ignite.metrics import Loss
 from utils.metrics import SiamSimAccuracy
 # training
 from ignite.engine import _prepare_batch
-from ignite.engine.engine import Engine
+from ignite.engine import create_supervised_evaluator
+from ignite.engine import Engine
 from ignite.engine import Events
 # handler
 from ignite.handlers import ModelCheckpoint
@@ -100,6 +105,24 @@ class CatClassification(SiameseCosDistanceWithCat):
 
         return self._trainer
 
+    @property
+    def evaluator(self):
+        if not self._evaluator:
+            # The evaluation metrics
+            metrics = {
+                "clsf_acc": Accuracy(),
+                "clsf_loss": Loss(self.loss_fns['cross_entropy'])
+            }
+            # create the evaluator from the ignite factory function
+            evaluator = create_supervised_evaluator(
+                self.models['cnn_net'], metrics=metrics,
+                device=self.device, non_blocking=self.pin_memory)
+
+            # save down the evaluator
+            self._evaluator = evaluator
+
+        return self._evaluator
+
     def run(self):
 
         # make scheduler
@@ -108,3 +131,77 @@ class CatClassification(SiameseCosDistanceWithCat):
         trainer = self.trainer
         # make evaluator
         evaluator = self.evaluator
+
+        pbar = ProgressBar()
+        pbar.attach(trainer, output_transform=lambda x: {
+            'clsf_loss': x['clsf_loss']
+        })
+        # --------------
+        # callbacks
+        # --------------
+        # Scheduler step forwards
+        trainer.add_event_handler(
+            Events.ITERATION_COMPLETED, lambda engine: scheduler.step())
+
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def show_training_acc(engine):
+            epoch = engine.state.epoch
+            metrics = engine.state.metrics
+            pbar.log_message(
+                "Epoch[{}] clsf_loss:{clsf_loss:.2f}; clsf_acc: {clsf_acc:.2f}"
+                .format(epoch, **metrics))
+
+        def eval_callbacks(mode='val'):
+            # prepare the evaluator
+            ProgressBar(desc="Evalating on " + mode).attach(evaluator)
+            ds = self.datasets[mode]
+            evaluator.run(
+                DataLoader(ds, **self.loader_kwargs))
+            metrics = evaluator.state.metrics
+            pbar.log_message(
+                mode +
+                " clsf_loss: {clsf_loss:.2f}; clsf_acc: {clsf_acc:.2f}"
+                .format(**metrics))
+
+        @trainer.on(Events.EPOCH_COMPLETED)
+        def log_to_csv(engine):
+
+            log = OrderedDict()
+            commom_cols = ["clsf_loss", "clsf_acc"]
+            # Log training part
+            log['epoch'] = engine.state.epoch
+            for col in commom_cols:
+                log["train_" + col] = engine.state.metrics[col]
+
+            # log validation
+            eval_callbacks(mode='val')
+            for col in commom_cols:
+                log["val_" + col] = evaluator.state.metrics[col]
+
+            # log test
+            eval_callbacks(mode='test')
+            for col in commom_cols:
+                log["test_" + col] = evaluator.state.metrics[col]
+            # log learning rate
+            log['lr'] = scheduler.get_lr()[0]
+            # write down
+            self.csv_logger.log_with_order(log)
+
+        # save checkpoints
+        to_save = {k: v for k, v in self.models.items() if k != "cnn_net"}
+        trainer.add_event_handler(
+            Events.EPOCH_COMPLETED,
+            ModelCheckpoint(
+                dirname=self.exp_folder, filename_prefix='',
+                save_interval=1,
+                n_saved=1e4, create_dir=True,
+                save_as_state_dict=True,
+                require_empty=False),
+            to_save)
+
+        # start training
+        trainer.run(
+            DataLoader(
+                self.datasets['train'],
+                **self.loader_kwargs, shuffle=True),
+            max_epochs=self.hparams.epochs)
