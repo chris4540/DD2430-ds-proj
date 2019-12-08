@@ -1,0 +1,9 @@
+{
+  "batch_size": 128,
+  "epochs": 20,
+  "eta_min": 1e-06,
+  "lambda_": null,
+  "lr": 0.0005,
+  "margin": 3.1623,
+  "weight_decay": 1e-05
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "catagory": "Blazer",
+    "label": 0,
+    "n_samples": 99,
+    "k": 50,
+    "mean": 0.4008,
+    "std": 0.3164
+  },
+  {
+    "catagory": "Blouse",
+    "label": 1,
+    "n_samples": 101,
+    "k": 50,
+    "mean": 0.2794,
+    "std": 0.2023
+  },
+  {
+    "catagory": "Cardigan",
+    "label": 2,
+    "n_samples": 91,
+    "k": 50,
+    "mean": 0.3714,
+    "std": 0.2905
+  },
+  {
+    "catagory": "Dress",
+    "label": 3,
+    "n_samples": 105,
+    "k": 50,
+    "mean": 0.512,
+    "std": 0.2876
+  },
+  {
+    "catagory": "Jacket",
+    "label": 4,
+    "n_samples": 104,
+    "k": 50,
+    "mean": 0.4217,
+    "std": 0.3047
+  },
+  {
+    "catagory": "Jeans",
+    "label": 5,
+    "n_samples": 105,
+    "k": 50,
+    "mean": 0.7497,
+    "std": 0.3418
+  },
+  {
+    "catagory": "Jumpsuit",
+    "label": 6,
+    "n_samples": 96,
+    "k": 50,
+    "mean": 0.6321,
+    "std": 0.3656
+  },
+  {
+    "catagory": "Leggings",
+    "label": 7,
+    "n_samples": 95,
+    "k": 50,
+    "mean": 0.7476,
+    "std": 0.3665
+  },
+  {
+    "catagory": "Romper",
+    "label": 8,
+    "n_samples": 116,
+    "k": 50,
+    "mean": 0.566,
+    "std": 0.3314
+  },
+  {
+    "catagory": "Shorts",
+    "label": 9,
+    "n_samples": 108,
+    "k": 50,
+    "mean": 0.5717,
+    "std": 0.3925
+  },
+  {
+    "catagory": "Skirt",
+    "label": 10,
+    "n_samples": 102,
+    "k": 50,
+    "mean": 0.5955,
+    "std": 0.3532
+  },
+  {
+    "catagory": "Sweater",
+    "label": 11,
+    "n_samples": 84,
+    "k": 50,
+    "mean": 0.3948,
+    "std": 0.3217
+  },
+  {
+    "catagory": "Tank",
+    "label": 12,
+    "n_samples": 102,
+    "k": 50,
+    "mean": 0.3798,
+    "std": 0.3074
+  },
+  {
+    "catagory": "Tee",
+    "label": 13,
+    "n_samples": 92,
+    "k": 50,
+    "mean": 0.4007,
+    "std": 0.3154
+  },
+  {
+    "catagory": "Top",
+    "label": 14,
+    "n_samples": 100,
+    "k": 50,
+    "mean": 0.1778,
+    "std": 0.1216
+  }
+]
