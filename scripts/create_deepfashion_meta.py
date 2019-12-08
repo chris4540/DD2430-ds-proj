@@ -128,6 +128,9 @@ if __name__ == '__main__':
     cat_to_idx = {k: i for i, k in enumerate(classes)}
     # map category_label to label (index)
     sampled_df['label'] = sampled_df['category'].map(cat_to_idx)
+    print("Category to label mapping:")
+    mapping = sampled_df[['label', 'category']].set_index("category").drop_duplicates()
+    print(mapping)
     # -----------------------------------
     # save the sampled data as csv
     file = path_join(cfg.data_root, cfg.sampled_data_csv_fname)
