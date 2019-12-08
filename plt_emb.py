@@ -36,11 +36,10 @@ trans = Compose([
     Resize(cfg.sizes), ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
-# train_ds = DeepFashionDataset(cfg.root_dir, 'train', transform=trans)
 train_ds = DeepFashionDataset(cfg.root_dir, 'val', transform=trans)
-samples = np.random.choice(len(train_ds), 5000, replace=False)
+rnd_state = np.random.RandomState(200)
+samples = rnd_state.choice(len(train_ds), 5000, replace=False)
 train_ds = Subset(train_ds, samples)
-# test_ds = DeepFashionDataset(cfg.root_dir, 'test', transform=trans)
 
 # Extract embedding vectors
 load_kwargs = {
@@ -55,8 +54,23 @@ embs, labels = extract_embeddings(emb_net, DataLoader(train_ds, **load_kwargs))
 embs = embs.cpu().numpy()
 labels = labels.cpu().numpy()
 # -----------------------------------------------------------------------------
+print("Plotting T-sne....")
 from cuml.manifold import TSNE
 tsne = TSNE(n_iter=1000, metric="euclidean")
 projected_emb = tsne.fit_transform(embs)
 fig = plot_embeddings(projected_emb, labels)
-fig.savefig('tmp.png', bbox_inches='tight')
+png_fname = join(exp_folder, 't-sne.png')
+fig.savefig(png_fname, bbox_inches='tight')
+pdf_fname = join(exp_folder, 't-sne.pdf')
+fig.savefig(pdf_fname, bbox_inches='tight')
+# -----------------------------------------------------------------------------
+print("Plotting PCA....")
+from cuml import PCA
+pca_float = PCA(n_components=2)
+cudf = pca_float.fit_transform(embs)
+projected_emb = cudf.to_pandas().to_numpy()
+fig = plot_embeddings(projected_emb, labels)
+png_fname = join(exp_folder, 'pca.png')
+fig.savefig(png_fname, bbox_inches='tight')
+pdf_fname = join(exp_folder, 't-sne.pdf')
+fig.savefig(pdf_fname, bbox_inches='tight')
