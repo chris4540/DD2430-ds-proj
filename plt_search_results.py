@@ -18,9 +18,11 @@ from annoy import AnnoyIndex
 # matplotlib
 import matplotlib.pyplot as plt
 plt.switch_backend('Agg')
+# take the input args
+import sys
 
-exp_folder = "exp_results/exp_siamcos"
-# exp_folder = "exp_results/exp_siamese_m2_100"
+exp_folder = sys.argv[1]
+print("Experiment result folder:", exp_folder)
 
 # Mdoels
 emb_net = ResidualEmbNetwork()
@@ -76,8 +78,10 @@ def plot_search_results(query_img_dix):
 # ran_state = np.random.RandomState(100)
 # sel_idx = ran_state.choice(len(test_ds), 5, replace=False)
 # sel_idx = [4002, 8716, 9388, 3013, 7513]
-sel_idx = [3012]
+sel_idx = [3012, 4002, 8716, 9388, 3013, 7513]
 for i in sel_idx:
     fig = plot_search_results(i)
-    file = join(exp_folder, 'search_idx_{}.png'.format(i))
-    fig.savefig(file, bbox_inches='tight')
+    png = join(exp_folder, 'search_idx_{}.png'.format(i))
+    fig.savefig(png, bbox_inches='tight')
+    pdf = join(exp_folder, 'search_idx_{}.pdf'.format(i))
+    fig.savefig(pdf, bbox_inches='tight')

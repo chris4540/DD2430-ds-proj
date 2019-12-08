@@ -23,9 +23,12 @@ from annoy import AnnoyIndex
 # matplotlib
 import matplotlib.pyplot as plt
 plt.switch_backend('Agg')
+# take the input args
+import sys
 
-exp_folder = "exp_results/exp_siamcos"
-# exp_folder = "exp_results/exp_siamese_m2_100"
+
+exp_folder = sys.argv[1]
+print("Experiment result folder:", exp_folder)
 
 # Mdoels
 emb_net = ResidualEmbNetwork()
