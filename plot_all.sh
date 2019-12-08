@@ -2,9 +2,13 @@
 
 folders="
 exp_cat
+exp_siamcat_m2_1
+exp_siamcat_m2_10
 exp_siamcat_m2_100
 exp_siamcat_m2_1000
 exp_siamcos
+exp_siamese_m2_1
+exp_siamese_m2_10
 exp_siamese_m2_100
 exp_siamese_m2_1000
 "
