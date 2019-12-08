@@ -1,3 +1,6 @@
+"""
+Plot embedding space
+"""
 import os
 import torch
 import numpy as np
@@ -8,10 +11,12 @@ from torchvision.transforms import ToTensor
 from torchvision.transforms import Normalize
 from config.deep_fashion import DeepFashionConfig as cfg
 from torch.utils.data import DataLoader
+from torch.utils.data import Subset
 from network.resnet import ResidualEmbNetwork
 from os.path import join
 # utils
 from utils import extract_embeddings
+from utils.plot_deep_fashion import plot_embeddings
 # Search tree
 from tqdm import tqdm
 from annoy import AnnoyIndex
@@ -32,7 +37,9 @@ trans = Compose([
     Normalize(cfg.mean, cfg.std)
 ])
 # train_ds = DeepFashionDataset(cfg.root_dir, 'train', transform=trans)
-val_ds = DeepFashionDataset(cfg.root_dir, 'val', transform=trans)
+train_ds = DeepFashionDataset(cfg.root_dir, 'val', transform=trans)
+samples = np.random.choice(len(train_ds), 5000, replace=False)
+train_ds = Subset(train_ds, samples)
 # test_ds = DeepFashionDataset(cfg.root_dir, 'test', transform=trans)
 
 # Extract embedding vectors
@@ -42,8 +49,14 @@ load_kwargs = {
 }
 
 # test_embs, _ = extract_embeddings(emb_net, DataLoader(test_ds, **load_kwargs))
-embs, _ = extract_embeddings(emb_net, DataLoader(val_ds, **load_kwargs))
+embs, labels = extract_embeddings(emb_net, DataLoader(train_ds, **load_kwargs))
+
+# translate them to cpu + numpy
+embs = embs.cpu().numpy()
+labels = labels.cpu().numpy()
 # -----------------------------------------------------------------------------
+from cuml.manifold import TSNE
 tsne = TSNE(n_iter=1000, metric="euclidean")
 projected_emb = tsne.fit_transform(embs)
-
+fig = plot_embeddings(projected_emb, labels)
+fig.savefig('tmp.png', bbox_inches='tight')
