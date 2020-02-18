@@ -1,15 +1,16 @@
-# Data Science Project
+# DD2430 - Data Science Project
 Group 15 - Fashion Image similarity
 
-# How to run tests
+## How to run tests
+----------------------
 ```bash
 $ pip install pytest pytest-timeout
 ```
 ```bash
 $ pytest tests
 ```
-# Preparation
-------------------
+## Preparation
+----------------------
 1. Download the image data
 ```bash
 $ scripts/download_deepfashion_ds.sh
@@ -43,13 +44,9 @@ $ scripts/create_deepfashion_meta.py
 ## Target for week 49
 - [x] Hyper-parameter tuning + over fitting with small dataset
 - [x] Deploy and babysit a while
-- [ ] Out-training evalution. (image search system)
-- [ ] Automatic backup experiment directory
-- [ ] Create detailed attributes for a class. Person in charge: Hassan
-- [ ] Model candidate: vgg16 (wo bn)
-- [ ] Search classical unsupervised learning method for meansuring cluster distances
-- [x] ~~Each epoch unspervised evaluation~~
-- [ ] csv logger
+- [x] Out-training evalution. (image search system)
+- [x] Automatic backup experiment directory
+- [x] csv logger
 
 
 ## Reason to use ignite
@@ -95,6 +92,6 @@ $ scripts/create_deepfashion_meta.py
 1. pytorch-1-3-rapids-0-10-cu100-20181117
 
 ### Reference paper and related work
-https://arxiv.org/pdf/1411.2539.pdf
-https://github.com/linxd5/VSE_Pytorch
-https://github.com/josharnoldjosh/Image-Caption-Joint-Embedding
+- https://arxiv.org/pdf/1411.2539.pdf  
+- https://github.com/linxd5/VSE_Pytorch  
+- https://github.com/josharnoldjosh/Image-Caption-Joint-Embedding 
